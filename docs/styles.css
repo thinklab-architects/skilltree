@@ -26,6 +26,10 @@ body {
   min-height: 100vh;
 }
 
+.hidden {
+  display: none !important;
+}
+
 h1, h2, h3, h4 {
   font-family: 'Space Grotesk', 'Manrope', sans-serif;
   margin: 0;
@@ -392,6 +396,59 @@ p {
 
 .map-node:hover {
   transform: translateY(-2px);
+}
+
+.admin-login {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 15, 0.95);
+  backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 10;
+}
+
+.admin-login.open {
+  display: flex;
+}
+
+.login-card {
+  max-width: 420px;
+  width: 100%;
+  background: rgba(12, 18, 30, 0.95);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px;
+  position: relative;
+  box-shadow: 0 40px 80px rgba(0, 0, 0, 0.55);
+}
+
+.login-card form {
+  display: flex;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.login-card input {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--ink);
+}
+
+.close-login {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  border: none;
+  background: transparent;
+  color: var(--muted);
+  font-size: 24px;
+  cursor: pointer;
 }
 
 .chip.active {

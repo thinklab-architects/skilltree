@@ -35,6 +35,8 @@ const trackMessage = document.getElementById('trackMessage');
 const ctaExplore = document.getElementById('ctaExplore');
 const ctaAdd = document.getElementById('ctaAdd');
 const trailMapSvg = document.getElementById('trailMapSvg');
+const adminLoginPage = document.getElementById('adminLoginPage');
+const adminLoginClose = document.getElementById('adminLoginClose');
 
 const staticMode = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
 const dataUrl = staticMode ? 'data/trails.json' : '/api/trails';
@@ -303,32 +305,38 @@ function setupSearch() {
 }
 
 function setupAdmin() {
+  if (!tokenInput || !tokenStatus) return;
   tokenInput.value = state.adminToken;
-  tokenStatus.textContent = staticMode
-    ? 'Editing is disabled on the GitHub Pages demo.'
-    : (state.adminToken ? 'Token ready' : 'Provide token to edit.');
+  updateTokenStatus();
+
+  hideAdminPanel();
+  if (!staticMode && state.adminToken) {
+    showAdminPanel();
+  }
+
+  if (adminToggle) {
+    adminToggle.addEventListener('click', () => openAdminLogin(true));
+  }
+  if (ctaAdd) {
+    ctaAdd.addEventListener('click', () => openAdminLogin(true));
+  }
+  if (adminLoginClose) {
+    adminLoginClose.addEventListener('click', () => closeAdminLogin());
+  }
 
   if (staticMode) {
     lockAdminUI();
     return;
   }
 
-  adminLogin.addEventListener('submit', e => {
-    e.preventDefault();
-    state.adminToken = tokenInput.value.trim();
-    sessionStorage.setItem('adminToken', state.adminToken);
-    tokenStatus.textContent = state.adminToken ? 'Token saved for this session.' : 'Token cleared.';
-  });
-
-  adminToggle.addEventListener('click', () => scrollToAdmin());
-  ctaAdd.addEventListener('click', () => scrollToAdmin(true));
+  if (adminLogin) {
+    adminLogin.addEventListener('submit', handleAdminLogin);
+  }
 }
 
-function scrollToAdmin(focusInput = false) {
+function scrollToAdmin() {
+  if (!adminPanel) return;
   adminPanel.scrollIntoView({ behavior: 'smooth' });
-  if (focusInput) {
-    setTimeout(() => tokenInput.focus(), 400);
-  }
 }
 
 function fillAdminSelects() {
@@ -537,17 +545,68 @@ function init() {
   loadData();
 }
 
+function handleAdminLogin(e) {
+  e.preventDefault();
+  const submitted = tokenInput.value.trim();
+  if (!submitted) {
+    updateTokenStatus('Please enter your ADMIN_TOKEN.');
+    return;
+  }
+  state.adminToken = submitted;
+  sessionStorage.setItem('adminToken', state.adminToken);
+  updateTokenStatus('Token saved. Unlocking editor...');
+  closeAdminLogin();
+  showAdminPanel();
+}
+
+function updateTokenStatus(message) {
+  if (!tokenStatus) return;
+  if (message) {
+    tokenStatus.textContent = message;
+    return;
+  }
+  tokenStatus.textContent = state.adminToken
+    ? 'Token ready. Close this dialog to edit.'
+    : 'Enter your ADMIN_TOKEN to unlock editing.';
+}
+
+function openAdminLogin(focusInput = false) {
+  if (!adminLoginPage) return;
+  adminLoginPage.classList.add('open');
+  adminLoginPage.setAttribute('aria-hidden', 'false');
+  if (focusInput && tokenInput && !tokenInput.disabled) {
+    setTimeout(() => tokenInput.focus(), 200);
+  }
+}
+
+function closeAdminLogin() {
+  if (!adminLoginPage) return;
+  adminLoginPage.classList.remove('open');
+  adminLoginPage.setAttribute('aria-hidden', 'true');
+}
+
+function showAdminPanel() {
+  if (!adminPanel) return;
+  adminPanel.classList.remove('hidden');
+  setTimeout(() => scrollToAdmin(), 150);
+}
+
+function hideAdminPanel() {
+  if (!adminPanel) return;
+  adminPanel.classList.add('hidden');
+}
+
 function lockAdminUI() {
-  adminPanel.classList.add('read-only');
-  moduleMessage.textContent = 'Admin editing is disabled on this static build. Clone the repo and run the server to edit.';
-  trackMessage.textContent = 'Admin editing is disabled on this static build.';
-  adminPanel.querySelectorAll('input, select, textarea, button').forEach(el => {
-    if (el.id !== 'adminToggle' && el.id !== 'ctaAdd') {
-      el.disabled = true;
-    }
-  });
+  hideAdminPanel();
+  updateTokenStatus('Admin editing is disabled on this static build. Clone the repo and run the server to edit.');
+  if (tokenInput) tokenInput.disabled = true;
+  if (adminLogin) {
+    const submitBtn = adminLogin.querySelector('button');
+    if (submitBtn) submitBtn.disabled = true;
+  }
 }
 
 window.addEventListener('resize', () => renderMap());
 
 init();
+

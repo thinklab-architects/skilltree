@@ -53,6 +53,26 @@
   </header>
 
   <main>
+    <section class="map-section" id="mapSection">
+      <div class="map-header">
+        <div>
+          <p class="eyebrow">Map view</p>
+          <h2>See the trails as a map</h2>
+          <p class="lede">
+            Each column represents a track and every node is a module. The lines guide you through the flow of materials so you can trace dependencies at a glance.
+          </p>
+        </div>
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot status-ready"></span>Ready</div>
+          <div class="legend-item"><span class="legend-dot status-in-review"></span>In review</div>
+          <div class="legend-item"><span class="legend-dot status-draft"></span>Draft</div>
+        </div>
+      </div>
+      <div class="map-wrapper">
+        <svg id="trailMapSvg" viewBox="0 0 960 320" role="img" aria-label="Skill trail map"></svg>
+      </div>
+    </section>
+
     <section class="filters">
       <div class="filter-row">
         <div class="filter-group">
@@ -75,43 +95,14 @@
       </div>
     </section>
 
-    <section class="map-section" id="mapSection">
-      <div class="map-header">
-        <div>
-          <p class="eyebrow">Map view</p>
-          <h2>See the trails as a map</h2>
-          <p class="lede">
-            Each column represents a track and every node is a module. The lines guide you through the flow of materials so you can trace dependencies at a glance.
-          </p>
-        </div>
-        <div class="map-legend">
-          <div class="legend-item"><span class="legend-dot status-ready"></span>Ready</div>
-          <div class="legend-item"><span class="legend-dot status-in-review"></span>In review</div>
-          <div class="legend-item"><span class="legend-dot status-draft"></span>Draft</div>
-        </div>
-      </div>
-      <div class="map-wrapper">
-        <svg id="trailMapSvg" viewBox="0 0 960 320" role="img" aria-label="Skill trail map"></svg>
-      </div>
-    </section>
-
     <section id="tracks" class="track-grid"></section>
 
-    <section class="admin" id="adminPanel">
+    <section class="admin hidden" id="adminPanel">
       <div class="admin-head">
         <div>
           <p class="eyebrow">Backstage</p>
           <h2>Editor for practice leads</h2>
-          <p class="lede">Use your admin token to publish updates, add tracks, or archive modules.</p>
-        </div>
-        <div class="token-box">
-          <label for="tokenInput" class="hint">Admin token (x-admin-token)</label>
-          <form id="adminLogin">
-            <input id="tokenInput" type="password" placeholder="Enter ADMIN_TOKEN">
-            <button class="pill" type="submit">Save token</button>
-          </form>
-          <p class="hint">Token is kept in this browser session only.</p>
-          <p class="hint" id="tokenStatus"></p>
+          <p class="lede">You are authenticated and can publish updates, add tracks, or archive modules.</p>
         </div>
       </div>
 
@@ -209,6 +200,21 @@
       </div>
     </section>
   </main>
+
+  <section class="admin-login" id="adminLoginPage" aria-hidden="true">
+    <div class="login-card">
+      <button class="close-login" id="adminLoginClose" aria-label="Close admin login">&times;</button>
+      <p class="eyebrow">Admin Access</p>
+      <h2>Enter your studio token</h2>
+      <p class="lede">Only approved practice leads can edit the trails.</p>
+      <form id="adminLogin">
+        <input id="tokenInput" type="password" placeholder="Enter ADMIN_TOKEN">
+        <button class="pill" type="submit">Continue</button>
+      </form>
+      <p class="hint" id="tokenStatus"></p>
+      <p class="hint">Token persists for this browser session only.</p>
+    </div>
+  </section>
 
   <footer class="footer">
     <div>
