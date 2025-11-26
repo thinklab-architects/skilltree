@@ -200,7 +200,8 @@ const initMap = () => {
         const text = el.append('text')
           .attr('text-anchor', 'middle')
           .attr('fill', '#444')
-          .style('font-size', '9px')
+          .style('font-size', '11px')
+          .style('font-weight', 'bold')
           .style('pointer-events', 'none')
           .style('text-shadow', '0 0 4px white')
         
