@@ -29,14 +29,14 @@ const tutorial = computed(() => {
     </header>
     
     <div class="sidebar-content" v-if="tutorial">
+      <p class="lede">{{ tutorial.summary }}</p>
+      
       <img 
         v-if="tutorial.coverImage" 
         :src="tutorial.coverImage" 
         :alt="tutorial.title"
         class="cover-image"
       >
-      
-      <p class="lede">{{ tutorial.summary }}</p>
       
       <div class="tag-row" style="margin: 16px 0;">
         <span v-for="tag in tutorial.tags" :key="tag" class="pill-sm">{{ tag }}</span>
