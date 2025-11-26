@@ -7,7 +7,12 @@ document.addEventListener('DOMContentLoaded', () => {
     backstageView: document.getElementById('backstageView'),
     tracksEl: document.getElementById('tracks'),
     trackFiltersEl: document.getElementById('trackFilters'),
-    statusFiltersEl: document.getElementById('statusFilters'),
+    trackFiltersEl: document.getElementById('trackFilters'),
+    // statusFiltersEl removed
+    searchInput: document.getElementById('searchInput'),
+    detailModal: document.getElementById('detailModal'),
+    closeModal: document.getElementById('closeModal'),
+    modalContent: document.getElementById('modalContent'),
 
     searchInput: document.getElementById('searchInput'),
     adminToggle: document.getElementById('adminToggle'),
@@ -51,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const state = {
     data: { tracks: [], tutorials: [] },
-    filters: { status: 'all', search: '', track: 'all' },
+    data: { tracks: [], tutorials: [] },
+    filters: { search: '', track: 'all' },
     adminToken: isAdminMode ? '1234' : null, // Pre-authorize if in admin mode
   };
 
-  const panState = { x: 0, y: 0, originX: 0, originY: 0, startX: 0, startY: 0, active: false };
-  const statusLabels = { 'ready': 'Ready', 'in-review': 'In review', 'draft': 'Draft' };
+  const panState = { x: 0, y: 0, scale: 1, isDragging: false, startX: 0, startY: 0 };
 
   async function loadData() {
     try {
@@ -113,10 +118,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const tutorials = state.data.tutorials;
     const filteredSet = new Set(applyFilters().map(t => t.id));
 
-    const viewportWidth = elements.treeViewport.clientWidth || 960;
-    const viewportHeight = elements.treeViewport.clientHeight || 600;
-    const width = Math.max(viewportWidth, 1400);
-    const height = Math.max(viewportHeight, 1400);
+    const width = 2000;
+    const height = 2000;
 
     elements.treeLines.setAttribute('viewBox', `0 0 ${width} ${height}`);
     elements.treeLines.setAttribute('width', width);
@@ -127,6 +130,15 @@ document.addEventListener('DOMContentLoaded', () => {
     elements.treeNodes.innerHTML = '';
 
     const center = { x: width / 2, y: height / 2 };
+
+    // Center initial view
+    if (panState.x === 0 && panState.y === 0) {
+      const viewportW = elements.treeViewport.clientWidth || window.innerWidth;
+      const viewportH = elements.treeViewport.clientHeight || window.innerHeight;
+      panState.x = (viewportW - width) / 2;
+      panState.y = (viewportH - height) / 2;
+    }
+
     createNodeElement({ id: 'root', title: 'THINKLAB SKILLTREE', subtitle: 'Start here', x: center.x, y: center.y }, null, true, true);
 
     const connectors = [];
@@ -162,9 +174,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isRoot) node.classList.add('root-node');
     if (!visible) node.classList.add('dimmed');
 
-    node.style.left = `${entry.x - 95}px`;
-    node.style.top = `${entry.y - 26}px`;
+    node.style.left = `${entry.x}px`;
+    node.style.top = `${entry.y}px`;
     node.innerHTML = `<strong>${entry.title}</strong><span>${isRoot ? entry.subtitle : (track?.title || '')}</span>`;
+
+    if (!isRoot && visible) {
+      node.addEventListener('click', (e) => {
+        e.stopPropagation();
+        showModal(entry.id);
+      });
+    }
 
     elements.treeNodes.appendChild(node);
   }
@@ -186,11 +205,11 @@ document.addEventListener('DOMContentLoaded', () => {
   function applyFilters() {
     const term = state.filters.search.toLowerCase();
     return state.data.tutorials.filter(t => {
-      const statusOk = state.filters.status === 'all' || t.status === state.filters.status;
+      // Status filter removed
       const trackOk = state.filters.track === 'all' || t.trackId === state.filters.track;
       const text = `${t.title} ${t.summary} ${(t.tags || []).join(' ')} ${t.owner || ''}`.toLowerCase();
       const searchOk = !term || text.includes(term);
-      return statusOk && trackOk && searchOk;
+      return trackOk && searchOk;
     });
   }
 
@@ -205,37 +224,99 @@ document.addEventListener('DOMContentLoaded', () => {
   function setupPan() {
     if (!elements.treeViewport) return;
     const viewport = elements.treeViewport;
+
+    // Pan
     viewport.addEventListener('pointerdown', e => {
       if (e.target.closest('.tree-node')) return;
-      panState.active = true;
-      panState.startX = e.clientX;
-      panState.startY = e.clientY;
+      panState.isDragging = true;
+      panState.startX = e.clientX - panState.x;
+      panState.startY = e.clientY - panState.y;
       viewport.setPointerCapture(e.pointerId);
+      viewport.style.cursor = 'grabbing';
     });
+
     viewport.addEventListener('pointermove', e => {
-      if (!panState.active) return;
-      const dx = e.clientX - panState.startX;
-      const dy = e.clientY - panState.startY;
-      panState.x = panState.originX + dx;
-      panState.y = panState.originY + dy;
+      if (!panState.isDragging) return;
+      panState.x = e.clientX - panState.startX;
+      panState.y = e.clientY - panState.startY;
       applyPan();
     });
+
     const endPan = e => {
-      if (!panState.active) return;
-      panState.active = false;
-      panState.originX = panState.x;
-      panState.originY = panState.y;
+      panState.isDragging = false;
+      viewport.style.cursor = 'grab';
       try { viewport.releasePointerCapture(e.pointerId); } catch { }
     };
+
     viewport.addEventListener('pointerup', endPan);
     viewport.addEventListener('pointerleave', endPan);
+
+    // Zoom
+    viewport.addEventListener('wheel', e => {
+      e.preventDefault();
+      const zoomSpeed = 0.001;
+      const newScale = Math.min(Math.max(0.2, panState.scale - e.deltaY * zoomSpeed), 3);
+
+      // Zoom towards mouse pointer
+      const rect = viewport.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const scaleRatio = newScale / panState.scale;
+
+      panState.x = mouseX - (mouseX - panState.x) * scaleRatio;
+      panState.y = mouseY - (mouseY - panState.y) * scaleRatio;
+      panState.scale = newScale;
+
+      applyPan();
+    }, { passive: false });
   }
 
   function applyPan() {
-    const transform = `translate(${panState.x}px, ${panState.y}px)`;
+    const transform = `translate(${panState.x}px, ${panState.y}px) scale(${panState.scale})`;
     if (elements.treeLines) elements.treeLines.style.transform = transform;
     if (elements.treeNodes) elements.treeNodes.style.transform = transform;
+    // Keep lines stroke width consistent visually
+    if (elements.treeLines) elements.treeLines.style.strokeWidth = `${2 / panState.scale}px`;
   }
+
+  function showModal(id) {
+    const item = state.data.tutorials.find(t => t.id === id);
+    if (!item) return;
+
+    const linksHtml = (item.links || []).map(l =>
+      `<a href="${l.url}" target="_blank" class="resource-link">🔗 ${l.label || 'Link'}</a>`
+    ).join('');
+
+    elements.modalContent.innerHTML = `
+      <p class="eyebrow">${item.level || 'Tutorial'}</p>
+      <h2>${item.title}</h2>
+      <p class="lede">${item.summary || ''}</p>
+      <div class="tag-row" style="margin: 16px 0;">
+        ${(item.tags || []).map(t => `<span class="pill-sm">${t}</span>`).join('')}
+        <span class="pill-sm">${item.duration || 'Self-paced'}</span>
+      </div>
+      <div style="margin-top: 20px;">
+        ${linksHtml}
+      </div>
+      ${item.highlight ? `<div style="margin-top: 20px; padding: 12px; background: #fffdf8; border: 1px solid #eee; border-radius: 8px;"><p><strong>Highlight:</strong> ${item.highlight}</p></div>` : ''}
+    `;
+
+    elements.detailModal.classList.add('open');
+    elements.detailModal.setAttribute('aria-hidden', 'false');
+  }
+
+  elements.closeModal?.addEventListener('click', () => {
+    elements.detailModal.classList.remove('open');
+    elements.detailModal.setAttribute('aria-hidden', 'true');
+  });
+
+  elements.detailModal?.addEventListener('click', (e) => {
+    if (e.target === elements.detailModal) {
+      elements.detailModal.classList.remove('open');
+      elements.detailModal.setAttribute('aria-hidden', 'true');
+    }
+  });
 
   // --- Admin Logic ---
   function setupAdminLogin() {
@@ -419,6 +500,8 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.remove('admin-mode');
 
       // Setup viewer interactions
+      // Status filters removed
+      /*
       elements.statusFiltersEl?.querySelectorAll('.chip').forEach(chip => {
         chip.addEventListener('click', () => {
           state.filters.status = chip.dataset.status;
@@ -426,6 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
           renderTree();
         });
       });
+      */
       elements.searchInput?.addEventListener('input', e => {
         state.filters.search = e.target.value;
         renderTree();

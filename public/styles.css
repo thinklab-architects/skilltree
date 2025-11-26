@@ -23,7 +23,10 @@ body {
   color: var(--ink);
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   margin: 0;
   font-family: 'Space Grotesk', sans-serif;
 }
@@ -139,9 +142,17 @@ p {
   border: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.status-ready { background: #1dd1a1; }
-.status-in-review { background: #ffb347; }
-.status-draft { background: #a1a1a1; }
+.status-ready {
+  background: #1dd1a1;
+}
+
+.status-in-review {
+  background: #ffb347;
+}
+
+.status-draft {
+  background: #a1a1a1;
+}
 
 .tree-viewport {
   position: relative;
@@ -183,6 +194,9 @@ p {
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transform: translate(-50%, -50%);
+  /* Center the node on its coordinates */
+  z-index: 2;
 }
 
 .tree-node span {
@@ -192,8 +206,9 @@ p {
 }
 
 .tree-node:hover {
-  transform: translateY(-4px);
+  transform: translate(-50%, -50%) translateY(-4px);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+  z-index: 3;
 }
 
 .tree-node.dimmed {
@@ -203,6 +218,52 @@ p {
 .tree-node.active {
   border-color: var(--accent);
   box-shadow: 0 18px 30px rgba(255, 122, 24, 0.35);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal-card {
+  background: #fff;
+  width: 90%;
+  max-width: 500px;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2);
+  transform: translateY(20px);
+  transition: transform 0.2s ease;
+}
+
+.modal-overlay.open .modal-card {
+  transform: translateY(0);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  font-size: 24px;
+  color: var(--muted);
+  cursor: pointer;
 }
 
 .root-node {
@@ -531,14 +592,17 @@ body.admin-mode #mapView {
     flex-direction: column;
     align-items: flex-start;
   }
+
   .tree-overlay-card {
     position: static;
     width: 100%;
     margin-top: 16px;
   }
+
   .tree-viewport {
     height: 65vh;
   }
+
   .node-drawer {
     width: 100%;
   }

@@ -1,14 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Architect Skill Trails</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
+
 <body class="tree-app">
   <header class="tree-header">
     <div class="brand">
@@ -30,11 +34,7 @@
           <p class="eyebrow">Radial explorer</p>
           <p>Drag to explore the practice map. Tracks radiate from the center hub.</p>
         </div>
-        <div class="legend-inline">
-          <span class="legend-chip"><span class="legend-dot status-ready"></span>Ready</span>
-          <span class="legend-chip"><span class="legend-dot status-in-review"></span>In review</span>
-          <span class="legend-chip"><span class="legend-dot status-draft"></span>Draft</span>
-        </div>
+
       </div>
       <div class="tree-viewport" id="treeViewport">
         <svg id="treeLines" role="presentation"></svg>
@@ -49,15 +49,7 @@
           <label class="hint">Search</label>
           <input type="search" id="searchInput" placeholder="Search tutorials, tags, or owners">
         </div>
-        <div class="filter-group">
-          <label class="hint">Status</label>
-          <div class="chip-row" id="statusFilters">
-            <button class="chip active" data-status="all">All</button>
-            <button class="chip" data-status="ready">Ready</button>
-            <button class="chip" data-status="in-review">In review</button>
-            <button class="chip" data-status="draft">Draft</button>
-          </div>
-        </div>
+
         <div class="filter-group">
           <label class="hint">Tracks</label>
           <div class="chip-row" id="trackFilters"></div>
@@ -189,10 +181,18 @@
     </div>
   </section>
 
+  <div class="modal-overlay" id="detailModal" aria-hidden="true">
+    <div class="modal-card">
+      <button class="modal-close" id="closeModal">&times;</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
   <footer class="footer">
     <div>
       <p class="eyebrow">Deploy</p>
-      <p>GitHub Pages: serve the docs folder (includes data/trails.json). For editable mode, run npm start on a Node host and set ADMIN_TOKEN.</p>
+      <p>GitHub Pages: serve the docs folder (includes data/trails.json). For editable mode, run npm start on a Node
+        host and set ADMIN_TOKEN.</p>
     </div>
     <div>
       <p class="eyebrow">Usage</p>
@@ -202,5 +202,5 @@
 
   <script src="app.js"></script>
 </body>
-</html>
 
+</html>
