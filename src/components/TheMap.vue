@@ -257,8 +257,8 @@ const initMap = () => {
         .style('filter', `drop-shadow(0 0 15px ${d.color})`)
         
       d3.select(this).select('text')
+        .attr('fill', 'white') // Text turns white
         .style('font-weight', 'bold')
-        // .attr('dy', 45) // Removed to keep centered
     }
   })
   .on('mouseleave', function(event, d) {
@@ -269,8 +269,8 @@ const initMap = () => {
         .style('filter', `drop-shadow(0 0 5px ${d.color})`)
         
       d3.select(this).select('text')
+        .attr('fill', '#444') // Revert to dark gray
         .style('font-weight', 'normal')
-        // .attr('dy', 40) // Removed to keep centered
     }
   })
 
