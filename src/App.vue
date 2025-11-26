@@ -80,6 +80,11 @@ onMounted(() => {
     <main id="main-view" :class="{ 'full-screen': viewMode === 'map' }">
       <section v-if="viewMode === 'map'" class="tree-stage">
         <div class="tree-toolbar">
+          <!-- Toolbar content if needed -->
+        </div>
+        
+        <div class="map-search-overlay">
+          <input type="search" v-model="filters.search" placeholder="Search nodes...">
         </div>
         
         <TheMap 
