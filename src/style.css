@@ -789,3 +789,28 @@ body.admin-mode #mapView {
   padding: 0 0 24px 0;
 }
 
+
+/* Track Node Styling */
+.tree-node.track-node {
+  width: auto;
+  min-width: 120px;
+  height: auto;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: #fff;
+  border: 2px solid currentColor; /* Uses the inline style borderColor */
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+}
+
+.track-label {
+  font-weight: 800;
+  font-size: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  text-align: center;
+}
+

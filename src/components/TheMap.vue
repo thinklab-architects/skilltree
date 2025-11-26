@@ -26,20 +26,37 @@ const nodes = computed(() => {
     subtitle: 'Start here', 
     x: center.x, 
     y: center.y, 
-    isRoot: true,
+    type: 'root',
     visible: true
   })
 
   const angleStep = (Math.PI * 2) / Math.max(props.tracks.length, 1)
-  const radiusStart = 160
-  const radiusStep = 140
+  const trackRadius = 250 // Distance of Track nodes from center
+  const tutorialStartRadius = 400 // Distance of first tutorial from center
+  const tutorialStep = 180 // Distance between tutorials
 
   props.tracks.forEach((track, idx) => {
-    const modules = props.tutorials.filter(t => t.trackId === track.id)
     const angle = angleStep * idx - Math.PI / 2
     
+    // Track Node
+    const trackX = center.x + Math.cos(angle) * trackRadius
+    const trackY = center.y + Math.sin(angle) * trackRadius
+    
+    result.push({
+      id: `track-${track.id}`,
+      title: track.title,
+      x: trackX,
+      y: trackY,
+      type: 'track',
+      color: track.color,
+      visible: true,
+      isRoot: false // It's not THE root, but it's a hub
+    })
+
+    // Tutorial Nodes
+    const modules = props.tutorials.filter(t => t.trackId === track.id)
     modules.forEach((module, modIdx) => {
-      const radius = radiusStart + radiusStep * (modIdx + 1)
+      const radius = tutorialStartRadius + tutorialStep * modIdx
       const x = center.x + Math.cos(angle) * radius
       const y = center.y + Math.sin(angle) * radius
       
@@ -49,8 +66,7 @@ const nodes = computed(() => {
         ...module,
         x,
         y,
-        trackTitle: track.title,
-        isRoot: false,
+        type: 'tutorial',
         visible: isVisible
       })
     })
@@ -61,30 +77,54 @@ const nodes = computed(() => {
 const connectors = computed(() => {
   const result = []
   const angleStep = (Math.PI * 2) / Math.max(props.tracks.length, 1)
-  const radiusStart = 160
-  const radiusStep = 140
+  const trackRadius = 250
+  const tutorialStartRadius = 400
+  const tutorialStep = 180
 
   props.tracks.forEach((track, idx) => {
-    const modules = props.tutorials.filter(t => t.trackId === track.id)
     const angle = angleStep * idx - Math.PI / 2
     
+    // 1. Root to Track
+    const trackX = center.x + Math.cos(angle) * trackRadius
+    const trackY = center.y + Math.sin(angle) * trackRadius
+    
+    result.push({
+      x1: center.x,
+      y1: center.y,
+      x2: trackX,
+      y2: trackY,
+      color: track.color || '#ccc',
+      type: 'root-track'
+    })
+
+    // 2. Track to Tutorials
+    const modules = props.tutorials.filter(t => t.trackId === track.id)
     if (!modules.length) return
 
     modules.forEach((module, modIdx) => {
-      const radius = radiusStart + radiusStep * (modIdx + 1)
+      const radius = tutorialStartRadius + tutorialStep * modIdx
       const x = center.x + Math.cos(angle) * radius
       const y = center.y + Math.sin(angle) * radius
       
-      const prevRadius = modIdx === 0 ? 0 : radiusStart + radiusStep * modIdx
-      const prevX = modIdx === 0 ? center.x : center.x + Math.cos(angle) * prevRadius
-      const prevY = modIdx === 0 ? center.y : center.y + Math.sin(angle) * prevRadius
+      let prevX, prevY
+      if (modIdx === 0) {
+        // Connect to Track Node
+        prevX = trackX
+        prevY = trackY
+      } else {
+        // Connect to previous tutorial
+        const prevRadius = tutorialStartRadius + tutorialStep * (modIdx - 1)
+        prevX = center.x + Math.cos(angle) * prevRadius
+        prevY = center.y + Math.sin(angle) * prevRadius
+      }
       
       result.push({
         x1: prevX,
         y1: prevY,
         x2: x,
         y2: y,
-        color: track.color || '#ffb347'
+        color: track.color || '#ffb347',
+        type: 'tutorial-link'
       })
     })
   })
@@ -191,18 +231,31 @@ const onNodeClick = (node, e) => {
         v-for="node in nodes" 
         :key="node.id"
         class="tree-node"
-        :class="{ 'root-node': node.isRoot, 'dimmed': !node.visible }"
-        :style="{ left: `${node.x}px`, top: `${node.y}px` }"
+        :class="{ 
+          'root-node': node.type === 'root', 
+          'track-node': node.type === 'track',
+          'dimmed': !node.visible 
+        }"
+        :style="{ 
+          left: `${node.x}px`, 
+          top: `${node.y}px`,
+          borderColor: node.type === 'track' ? node.color : undefined 
+        }"
         @click="(e) => onNodeClick(node, e)"
       >
-        <template v-if="node.isRoot">
+        <template v-if="node.type === 'root'">
           <div class="root-circle">
             <span>THINKLAB</span>
           </div>
         </template>
+        <template v-else-if="node.type === 'track'">
+          <div class="track-label" :style="{ color: node.color }">
+            {{ node.title }}
+          </div>
+        </template>
         <template v-else>
           <strong>{{ node.title }}</strong>
-          <span>{{ node.trackTitle }}</span>
+          <!-- Removed track title as requested -->
         </template>
       </div>
     </div>
