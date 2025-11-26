@@ -449,51 +449,6 @@ p {
   cursor: pointer;
 }
 
-.node-drawer {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: min(420px, 100%);
-  height: 100vh;
-  background: #fff;
-  border-left: 1px solid var(--border);
-  box-shadow: -20px 0 60px rgba(0, 0, 0, 0.12);
-  transform: translateX(100%);
-  transition: transform 0.3s ease;
-  z-index: 7;
-  padding: 32px 28px;
-  overflow-y: auto;
-}
-
-.node-drawer.open {
-  transform: translateX(0);
-}
-
-.drawer-close {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  border: none;
-  background: transparent;
-  color: var(--muted);
-  font-size: 28px;
-  cursor: pointer;
-}
-
-.drawer-meta,
-.drawer-tags,
-.drawer-links {
-  margin-top: 16px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.drawer-links a {
-  color: var(--accent);
-  text-decoration: none;
-}
-
 .admin-login {
   position: fixed;
   inset: 0;
@@ -504,6 +459,21 @@ p {
   justify-content: center;
   padding: 20px;
   z-index: 15;
+}
+
+body.admin-mode .tree-header,
+body.admin-mode .footer,
+body.admin-mode #mapView {
+  display: none;
+}
+
+.backstage-header {
+  padding: 24px clamp(16px, 4vw, 48px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg);
 }
 
 .admin-login.open {

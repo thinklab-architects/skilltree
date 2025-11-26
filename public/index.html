@@ -19,12 +19,11 @@
       </div>
     </div>
     <div class="header-actions">
-      <button class="pill ghost" id="listViewBtn">List view</button>
-      <button class="pill" id="adminToggle">Admin / Edit</button>
+      <button class="pill" id="adminToggle">Login</button>
     </div>
   </header>
 
-  <main>
+  <main id="mapView">
     <section class="tree-stage" id="treeStage">
       <div class="tree-toolbar">
         <div>
@@ -71,15 +70,18 @@
 
     <section id="tracks" class="track-grid"></section>
 
-    <section class="admin hidden" id="adminPanel">
-      <div class="admin-head">
-        <div>
-          <p class="eyebrow">Backstage</p>
-          <h2>Editor for practice leads</h2>
-          <p class="lede">You are authenticated and can publish updates, add tracks, or archive modules.</p>
-        </div>
-      </div>
+  </main>
 
+  <section id="backstageView" class="hidden">
+    <header class="backstage-header">
+      <div>
+        <p class="eyebrow">Backstage</p>
+        <h2>Editor for practice leads</h2>
+        <p class="lede">Manage tutorials and tracks here.</p>
+      </div>
+      <button class="pill ghost" id="backToTree">Back to tree</button>
+    </header>
+    <section class="admin" id="adminPanel">
       <div class="admin-grid">
         <div class="panel">
           <div class="panel-head">
@@ -164,7 +166,7 @@
               </div>
             </div>
             <label>Accent color</label>
-            <input id="trackColor" type="color" value="#4bffaa">
+            <input id="trackColor" type="color" value="#ff7a18">
             <div class="panel-actions">
               <button class="pill" type="submit">Add track</button>
             </div>
@@ -173,18 +175,7 @@
         </div>
       </div>
     </section>
-  </main>
-
-  <aside class="node-drawer" id="nodeDrawer" aria-live="assertive">
-    <button class="drawer-close" id="drawerClose" aria-label="Close module details">&times;</button>
-    <p class="eyebrow" id="drawerTrack"></p>
-    <h2 id="drawerTitle"></h2>
-    <p class="hint" id="drawerStatus"></p>
-    <p id="drawerSummary"></p>
-    <div class="drawer-meta" id="drawerMeta"></div>
-    <div class="drawer-tags" id="drawerTags"></div>
-    <div class="drawer-links" id="drawerLinks"></div>
-  </aside>
+  </section>
 
   <section class="admin-login" id="adminLoginPage" aria-hidden="true">
     <div class="login-card">

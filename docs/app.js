@@ -1,661 +1,464 @@
-const tracksEl = document.getElementById('tracks');
-const trackFiltersEl = document.getElementById('trackFilters');
-const statusFiltersEl = document.getElementById('statusFilters');
-const heroMetricsEl = document.getElementById('heroMetrics');
-const miniListEl = document.getElementById('miniList');
-const searchInput = document.getElementById('searchInput');
-const adminPanel = document.getElementById('adminPanel');
-const adminToggle = document.getElementById('adminToggle');
-const adminLoginForm = document.getElementById('adminLogin');
-const tokenInput = document.getElementById('tokenInput');
-const tokenStatus = document.getElementById('tokenStatus');
-const moduleSelect = document.getElementById('moduleSelect');
-const moduleForm = document.getElementById('moduleForm');
-const moduleMessage = document.getElementById('moduleMessage');
-const moduleTitle = document.getElementById('moduleTitle');
-const moduleTrack = document.getElementById('moduleTrack');
-const moduleSummary = document.getElementById('moduleSummary');
-const moduleStatusEl = document.getElementById('moduleStatus');
-const moduleLevel = document.getElementById('moduleLevel');
-const moduleDuration = document.getElementById('moduleDuration');
-const moduleTags = document.getElementById('moduleTags');
-const moduleHighlight = document.getElementById('moduleHighlight');
-const moduleOwner = document.getElementById('moduleOwner');
-const linkFields = document.getElementById('linkFields');
-const addLinkBtn = document.getElementById('addLink');
-const deleteModuleBtn = document.getElementById('deleteModule');
-const resetModuleBtn = document.getElementById('resetModule');
-const trackForm = document.getElementById('trackForm');
-const trackTitle = document.getElementById('trackTitle');
-const trackDescription = document.getElementById('trackDescription');
-const trackFocus = document.getElementById('trackFocus');
-const trackLead = document.getElementById('trackLead');
-const trackColor = document.getElementById('trackColor');
-const trackMessage = document.getElementById('trackMessage');
-const treeViewport = document.getElementById('treeViewport');
-const treeLines = document.getElementById('treeLines');
-const treeNodes = document.getElementById('treeNodes');
-const listViewBtn = document.getElementById('listViewBtn');
-const nodeDrawer = document.getElementById('nodeDrawer');
-const drawerClose = document.getElementById('drawerClose');
-const drawerTrack = document.getElementById('drawerTrack');
-const drawerTitle = document.getElementById('drawerTitle');
-const drawerStatus = document.getElementById('drawerStatus');
-const drawerSummary = document.getElementById('drawerSummary');
-const drawerMeta = document.getElementById('drawerMeta');
-const drawerTags = document.getElementById('drawerTags');
-const drawerLinks = document.getElementById('drawerLinks');
-const adminLoginPage = document.getElementById('adminLoginPage');
-const adminLoginClose = document.getElementById('adminLoginClose');
+document.addEventListener('DOMContentLoaded', () => {
+  const isAdminMode = new URL(window.location).searchParams.get('mode') === 'admin';
 
-const dataUrl = window.location.protocol === 'file:' || window.location.hostname.includes('github.io')
-  ? 'data/trails.json'
-  : '/api/trails';
+  // Element cache
+  const elements = {
+    mapView: document.getElementById('mapView'),
+    backstageView: document.getElementById('backstageView'),
+    tracksEl: document.getElementById('tracks'),
+    trackFiltersEl: document.getElementById('trackFilters'),
+    statusFiltersEl: document.getElementById('statusFilters'),
+    heroMetricsEl: document.getElementById('heroMetrics'),
+    miniListEl: document.getElementById('miniList'),
+    searchInput: document.getElementById('searchInput'),
+    adminToggle: document.getElementById('adminToggle'),
+    adminLoginPage: document.getElementById('adminLoginPage'),
+    adminLoginClose: document.getElementById('adminLoginClose'),
+    adminLoginForm: document.getElementById('adminLogin'),
+    tokenInput: document.getElementById('tokenInput'),
+    tokenStatus: document.getElementById('tokenStatus'),
+    moduleForm: document.getElementById('moduleForm'),
+    moduleSelect: document.getElementById('moduleSelect'),
+    moduleMessage: document.getElementById('moduleMessage'),
+    moduleTitle: document.getElementById('moduleTitle'),
+    moduleTrack: document.getElementById('moduleTrack'),
+    moduleSummary: document.getElementById('moduleSummary'),
+    moduleStatusEl: document.getElementById('moduleStatus'),
+    moduleLevel: document.getElementById('moduleLevel'),
+    moduleDuration: document.getElementById('moduleDuration'),
+    moduleTags: document.getElementById('moduleTags'),
+    moduleHighlight: document.getElementById('moduleHighlight'),
+    moduleOwner: document.getElementById('moduleOwner'),
+    linkFields: document.getElementById('linkFields'),
+    addLinkBtn: document.getElementById('addLink'),
+    deleteModuleBtn: document.getElementById('deleteModule'),
+    resetModuleBtn: document.getElementById('resetModule'),
+    trackForm: document.getElementById('trackForm'),
+    trackTitle: document.getElementById('trackTitle'),
+    trackDescription: document.getElementById('trackDescription'),
+    trackFocus: document.getElementById('trackFocus'),
+    trackLead: document.getElementById('trackLead'),
+    trackColor: document.getElementById('trackColor'),
+    trackMessage: document.getElementById('trackMessage'),
+    treeViewport: document.getElementById('treeViewport'),
+    treeLines: document.getElementById('treeLines'),
+    treeNodes: document.getElementById('treeNodes'),
+    backToTreeBtn: document.getElementById('backToTree'),
+  };
 
-const state = {
-  data: { tracks: [], tutorials: [] },
-  filters: { status: 'all', search: '', track: 'all' },
-  adminToken: null,
-  selectedModuleId: null
-};
+  const dataUrl = window.location.protocol === 'file:' || window.location.hostname.includes('github.io')
+    ? 'data/trails.json'
+    : '/api/trails';
 
-const panState = {
-  x: 0,
-  y: 0,
-  originX: 0,
-  originY: 0,
-  startX: 0,
-  startY: 0,
-  active: false
-};
+  const state = {
+    data: { tracks: [], tutorials: [] },
+    filters: { status: 'all', search: '', track: 'all' },
+    adminToken: isAdminMode ? '1234' : null, // Pre-authorize if in admin mode
+  };
 
-const statusLabels = {
-  ready: 'Ready',
-  'in-review': 'In review',
-  draft: 'Draft'
-};
+  const panState = { x: 0, y: 0, originX: 0, originY: 0, startX: 0, startY: 0, active: false };
+  const statusLabels = { 'ready': 'Ready', 'in-review': 'In review', 'draft': 'Draft' };
 
-async function loadData() {
-  try {
-    const res = await fetch(dataUrl);
-    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-    state.data = await res.json();
-    renderFilters();
-    renderTracks();
-    renderMetrics();
-    fillAdminSelects();
-    renderTree();
-  } catch (err) {
-    console.error('Failed to load trails data', err);
-    if (tracksEl) {
-      tracksEl.innerHTML = '<p class="hint">Unable to load data. Ensure data/trails.json exists.</p>';
+  async function loadData() {
+    try {
+      const res = await fetch(dataUrl);
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`);
+      state.data = await res.json();
+      
+      if (isAdminMode) {
+        fillAdminSelects();
+      } else {
+        renderFilters();
+        renderMetrics();
+        renderTree();
+      }
+    } catch (err) {
+      console.error('Failed to load trails data', err);
+      if (elements.tracksEl) {
+        elements.tracksEl.innerHTML = '<p class="hint">Unable to load data. Ensure data/trails.json exists or the API server is running.</p>';
+      }
     }
   }
-}
 
-function renderFilters() {
-  if (!trackFiltersEl) return;
-  trackFiltersEl.innerHTML = '';
-  const allBtn = createChip('All tracks', 'all', state.filters.track === 'all');
-  trackFiltersEl.appendChild(allBtn);
-  state.data.tracks.forEach(track => {
-    const btn = createChip(track.title, track.id, state.filters.track === track.id);
-    btn.style.borderColor = track.color;
-    btn.style.color = track.color;
-    trackFiltersEl.appendChild(btn);
-  });
-}
-
-function createChip(label, value, active) {
-  const btn = document.createElement('button');
-  btn.className = `chip${active ? ' active' : ''}`;
-  btn.dataset.value = value;
-  btn.textContent = label;
-  btn.addEventListener('click', () => {
-    state.filters.track = value;
-    renderFilters();
-    renderTracks();
-    renderTree();
-  });
-  return btn;
-}
-
-function renderMetrics() {
-  if (!heroMetricsEl || !miniListEl) return;
-  const { tutorials } = state.data;
-  const ready = tutorials.filter(t => t.status === 'ready').length;
-  const review = tutorials.filter(t => t.status === 'in-review').length;
-  const draft = tutorials.filter(t => t.status === 'draft').length;
-  heroMetricsEl.innerHTML = `
-    <div class="metric"><div class="label">Tutorials</div><div class="value">${tutorials.length}</div></div>
-    <div class="metric"><div class="label">Ready</div><div class="value">${ready}</div></div>
-    <div class="metric"><div class="label">In review</div><div class="value">${review}</div></div>
-    <div class="metric"><div class="label">Draft</div><div class="value">${draft}</div></div>
-  `;
-  const featured = [...tutorials]
-    .sort((a, b) => scoreStatus(a.status) - scoreStatus(b.status))
-    .slice(0, 4);
-  miniListEl.innerHTML = featured.map(item => `
-    <li class="mini-item">
-      <div>
-        <div class="title">${item.title}</div>
-        <div class="tag">${statusLabels[item.status] || item.status} · ${item.duration || 'time tbd'}</div>
-      </div>
-      <span class="status-dot ${statusClass(item.status)}">${statusLabels[item.status] || item.status}</span>
-    </li>
-  `).join('');
-}
-
-function renderTracks() {
-  if (!tracksEl) return;
-  const filtered = applyFilters();
-  tracksEl.innerHTML = '';
-  state.data.tracks.forEach(track => {
-    const tutorials = filtered.filter(t => t.trackId === track.id);
-    const card = document.createElement('article');
-    card.className = 'track-card';
-    card.innerHTML = `
-      <div class="track-header">
-        <div>
-          <p class="eyebrow">${track.focus || 'Practice focus'}</p>
-          <h3>${track.title}</h3>
-        </div>
-        <div class="pill-sm" style="border-color:${track.color}; color:${track.color};">Lead · ${track.lead || 'TBD'}</div>
-      </div>
-      <p class="trail-summary">${track.description || ''}</p>
-      <ul class="trail-list">
-        ${tutorials.map(t => renderTutorial(t, track)).join('')}
-      </ul>
-    `;
-    tracksEl.appendChild(card);
-  });
-}
-
-function renderTutorial(tutorial, track) {
-  const status = statusLabels[tutorial.status] || tutorial.status;
-  const link = tutorial.links && tutorial.links[0];
-  const tags = (tutorial.tags || []).slice(0, 4);
-  return `
-    <li class="trail-item">
-      <div class="trail-body">
-        <div class="trail-title">${tutorial.title}</div>
-        <div class="trail-summary">${tutorial.summary || ''}</div>
-        <div class="tag-row">
-          <span class="pill-sm status-dot ${statusClass(tutorial.status)}">${status}</span>
-          ${tutorial.level ? `<span class="pill-sm">${tutorial.level}</span>` : ''}
-          ${tutorial.duration ? `<span class="pill-sm">${tutorial.duration}</span>` : ''}
-          ${tutorial.owner ? `<span class="pill-sm">Owner · ${tutorial.owner}</span>` : ''}
-        </div>
-        ${tutorial.highlight ? `<p class="hint">${tutorial.highlight}</p>` : ''}
-        ${tags.length ? `<div class="tag-row">${tags.map(tag => `<span class="pill-sm">#${tag}</span>`).join('')}</div>` : ''}
-      </div>
-      <div class="trail-body" style="align-items:flex-end; gap:8px;">
-        <span class="status-dot ${statusClass(tutorial.status)}">${status}</span>
-        ${link ? `<a class="resource-link" href="${link.url}" target="_blank" rel="noreferrer">Open ${link.label}</a>` : ''}
-      </div>
-    </li>
-  `;
-}
-
-function renderTree() {
-  if (!treeViewport || !treeLines || !treeNodes) return;
-  const tracks = state.data.tracks;
-  const tutorials = state.data.tutorials;
-  const filteredSet = new Set(applyFilters().map(t => t.id));
-  const viewportWidth = treeViewport.clientWidth || 960;
-  const viewportHeight = treeViewport.clientHeight || 600;
-  const width = Math.max(viewportWidth, 1400);
-  const height = Math.max(viewportHeight, 1400);
-  treeLines.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  treeLines.setAttribute('width', width);
-  treeLines.setAttribute('height', height);
-  treeNodes.style.width = `${width}px`;
-  treeNodes.style.height = `${height}px`;
-  treeLines.innerHTML = '';
-  treeNodes.innerHTML = '';
-
-  const center = { x: width / 2, y: height / 2 };
-  const root = { id: 'root', title: 'THINKLAB SKILLTREE', subtitle: 'Start here', x: center.x, y: center.y };
-  createNodeElement(root, null, true, true);
-
-  const connectors = [];
-  const angleStep = (Math.PI * 2) / Math.max(tracks.length, 1);
-  const radiusStart = 160;
-  const radiusStep = 140;
-
-  tracks.forEach((track, idx) => {
-    const modules = tutorials.filter(t => t.trackId === track.id);
-    const angle = angleStep * idx - Math.PI / 2;
-    if (!modules.length) {
-      const x = center.x + Math.cos(angle) * (radiusStart + 80);
-      const y = center.y + Math.sin(angle) * (radiusStart + 80);
-      connectors.push({
-        x1: center.x,
-        y1: center.y,
-        x2: x,
-        y2: y,
-        color: track.color || '#ffb347'
-      });
-      return;
-    }
-    modules.forEach((module, modIdx) => {
-      const radius = radiusStart + radiusStep * (modIdx + 1);
-      const x = center.x + Math.cos(angle) * radius;
-      const y = center.y + Math.sin(angle) * radius;
-      const match = filteredSet.has(module.id);
-      createNodeElement({
-        id: module.id,
-        title: module.title,
-        subtitle: track.title,
-        x,
-        y
-      }, track, false, match);
-      const previousRadius = modIdx === 0 ? 0 : radiusStart + radiusStep * modIdx;
-      const prevX = modIdx === 0 ? center.x : center.x + Math.cos(angle) * previousRadius;
-      const prevY = modIdx === 0 ? center.y : center.y + Math.sin(angle) * previousRadius;
-      connectors.push({
-        x1: prevX,
-        y1: prevY,
-        x2: x,
-        y2: y,
-        color: track.color || '#ffb347'
-      });
+  function renderFilters() {
+    if (!elements.trackFiltersEl) return;
+    elements.trackFiltersEl.innerHTML = '';
+    const allBtn = createChip('All tracks', 'all', state.filters.track === 'all');
+    elements.trackFiltersEl.appendChild(allBtn);
+    state.data.tracks.forEach(track => {
+      const btn = createChip(track.title, track.id, state.filters.track === track.id);
+      btn.style.borderColor = track.color;
+      btn.style.color = track.color;
+      elements.trackFiltersEl.appendChild(btn);
     });
-  });
-
-  drawConnectors(connectors);
-  applyPan();
-}
-
-function createNodeElement(entry, track, isRoot = false, visible = true) {
-  const node = document.createElement('button');
-  node.type = 'button';
-  node.className = 'tree-node';
-  if (isRoot) node.classList.add('root-node');
-  if (!visible && !isRoot) node.classList.add('dimmed');
-  if (!isRoot && state.selectedModuleId === entry.id) node.classList.add('active');
-  node.style.left = `${entry.x - 95}px`;
-  node.style.top = `${entry.y - 26}px`;
-  node.innerHTML = isRoot
-    ? `<strong>${entry.title}</strong><span>${entry.subtitle}</span>`
-    : `<strong>${entry.title}</strong><span>${track?.title || ''}</span>`;
-  if (!isRoot) {
-    node.addEventListener('click', () => openDrawer(entry.id));
-  } else {
-    node.disabled = true;
   }
-  treeNodes.appendChild(node);
-}
 
-function drawConnectors(connectors) {
-  const ns = 'http://www.w3.org/2000/svg';
-  connectors.forEach(conn => {
-    const path = document.createElementNS(ns, 'path');
-    const d = `M ${conn.x1} ${conn.y1} L ${conn.x2} ${conn.y2}`;
-    path.setAttribute('d', d);
-    path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', conn.color || 'rgba(0,0,0,0.2)');
-    path.setAttribute('stroke-width', '2');
-    path.setAttribute('stroke-linecap', 'round');
-    path.setAttribute('opacity', '0.35');
-    treeLines.appendChild(path);
-  });
-}
-
-function openDrawer(moduleId) {
-  const module = state.data.tutorials.find(t => t.id === moduleId);
-  if (!module || !nodeDrawer) return;
-  const track = state.data.tracks.find(t => t.id === module.trackId);
-  state.selectedModuleId = moduleId;
-  drawerTrack.textContent = track?.title || 'Practice module';
-  drawerTitle.textContent = module.title || '';
-  drawerStatus.textContent = `${statusLabels[module.status] || module.status || 'Draft'} · ${module.duration || 'time tbd'}`;
-  drawerSummary.textContent = module.summary || 'No summary yet.';
-  const metaItems = [];
-  if (module.owner) metaItems.push(`<span class="pill-sm">Owner · ${module.owner}</span>`);
-  if (module.level) metaItems.push(`<span class="pill-sm">${module.level}</span>`);
-  if (module.highlight) metaItems.push(`<span class="pill-sm">${module.highlight}</span>`);
-  drawerMeta.innerHTML = metaItems.join('');
-  drawerTags.innerHTML = (module.tags || []).map(tag => `<span class="pill-sm">#${tag}</span>`).join('');
-  drawerLinks.innerHTML = (module.links || []).map(link => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label || 'View resource'}</a>`).join('');
-  nodeDrawer.classList.add('open');
-  renderTree();
-}
-
-function closeDrawer() {
-  if (!nodeDrawer) return;
-  nodeDrawer.classList.remove('open');
-  state.selectedModuleId = null;
-  renderTree();
-}
-
-function applyFilters() {
-  const term = state.filters.search.toLowerCase();
-  return state.data.tutorials.filter(t => {
-    const statusOk = state.filters.status === 'all' ? true : t.status === state.filters.status;
-    const trackOk = state.filters.track === 'all' ? true : t.trackId === state.filters.track;
-    const text = `${t.title} ${t.summary} ${(t.tags || []).join(' ')} ${t.owner || ''}`.toLowerCase();
-    const searchOk = !term || text.includes(term);
-    return statusOk && trackOk && searchOk;
-  });
-}
-
-function statusClass(status) {
-  return status === 'ready' ? 'status-ready' : status === 'in-review' ? 'status-in-review' : 'status-draft';
-}
-
-function scoreStatus(status) {
-  switch (status) {
-    case 'ready': return 0;
-    case 'in-review': return 1;
-    case 'draft': return 2;
-    default: return 3;
-  }
-}
-
-function setupStatusFilters() {
-  if (!statusFiltersEl) return;
-  statusFiltersEl.querySelectorAll('.chip').forEach(chip => {
-    chip.addEventListener('click', () => {
-      state.filters.status = chip.dataset.status;
-      statusFiltersEl.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('active', btn === chip));
-      renderTracks();
+  function createChip(label, value, active) {
+    const btn = document.createElement('button');
+    btn.className = `chip${active ? ' active' : ''}`;
+    btn.dataset.value = value;
+    btn.textContent = label;
+    btn.addEventListener('click', () => {
+      state.filters.track = value;
+      renderFilters();
       renderTree();
     });
-  });
-}
+    return btn;
+  }
 
-function setupSearch() {
-  if (!searchInput) return;
-  searchInput.addEventListener('input', e => {
-    state.filters.search = e.target.value;
-    renderTracks();
-    renderTree();
-  });
-}
+  function renderMetrics() {
+    if (!elements.heroMetricsEl || !elements.miniListEl) return;
+    const { tutorials } = state.data;
+    const ready = tutorials.filter(t => t.status === 'ready').length;
+    const review = tutorials.filter(t => t.status === 'in-review').length;
+    const draft = tutorials.filter(t => t.status === 'draft').length;
+    elements.heroMetricsEl.innerHTML = `
+      <div class="metric"><div class="label">Tutorials</div><div class="value">${tutorials.length}</div></div>
+      <div class="metric"><div class="label">Ready</div><div class="value">${ready}</div></div>
+      <div class="metric"><div class="label">In review</div><div class="value">${review}</div></div>
+      <div class="metric"><div class="label">Draft</div><div class="value">${draft}</div></div>
+    `;
+    const featured = [...tutorials].sort((a, b) => scoreStatus(a.status) - scoreStatus(b.status)).slice(0, 4);
+    elements.miniListEl.innerHTML = featured.map(item => `
+      <li class="mini-item">
+        <div>
+          <div class="title">${item.title}</div>
+          <div class="tag">${statusLabels[item.status] || item.status} · ${item.duration || 'time tbd'}</div>
+        </div>
+        <span class="status-dot ${statusClass(item.status)}"></span>
+      </li>
+    `).join('');
+  }
 
-function setupListButton() {
-  if (!listViewBtn) return;
-  listViewBtn.addEventListener('click', () => {
-    document.querySelector('.filters')?.scrollIntoView({ behavior: 'smooth' });
-  });
-}
+  function renderTree() {
+    if (!elements.treeViewport || !elements.treeLines || !elements.treeNodes) return;
+    const tracks = state.data.tracks;
+    const tutorials = state.data.tutorials;
+    const filteredSet = new Set(applyFilters().map(t => t.id));
+    
+    const viewportWidth = elements.treeViewport.clientWidth || 960;
+    const viewportHeight = elements.treeViewport.clientHeight || 600;
+    const width = Math.max(viewportWidth, 1400);
+    const height = Math.max(viewportHeight, 1400);
 
-function setupPan() {
-  if (!treeViewport) return;
-  treeViewport.addEventListener('pointerdown', e => {
-    if (e.target.closest('.tree-node')) return;
-    panState.active = true;
-    panState.startX = e.clientX;
-    panState.startY = e.clientY;
-    treeViewport.setPointerCapture(e.pointerId);
-  });
-  treeViewport.addEventListener('pointermove', e => {
-    if (!panState.active) return;
-    const dx = e.clientX - panState.startX;
-    const dy = e.clientY - panState.startY;
-    panState.x = panState.originX + dx;
-    panState.y = panState.originY + dy;
+    elements.treeLines.setAttribute('viewBox', `0 0 ${width} ${height}`);
+    elements.treeLines.setAttribute('width', width);
+    elements.treeLines.setAttribute('height', height);
+    elements.treeNodes.style.width = `${width}px`;
+    elements.treeNodes.style.height = `${height}px`;
+    elements.treeLines.innerHTML = '';
+    elements.treeNodes.innerHTML = '';
+
+    const center = { x: width / 2, y: height / 2 };
+    createNodeElement({ id: 'root', title: 'THINKLAB SKILLTREE', subtitle: 'Start here', x: center.x, y: center.y }, null, true, true);
+
+    const connectors = [];
+    const angleStep = (Math.PI * 2) / Math.max(tracks.length, 1);
+    const radiusStart = 160;
+    const radiusStep = 140;
+
+    tracks.forEach((track, idx) => {
+      const modules = tutorials.filter(t => t.trackId === track.id);
+      const angle = angleStep * idx - Math.PI / 2;
+      if (!modules.length) return;
+      
+      modules.forEach((module, modIdx) => {
+        const radius = radiusStart + radiusStep * (modIdx + 1);
+        const x = center.x + Math.cos(angle) * radius;
+        const y = center.y + Math.sin(angle) * radius;
+        createNodeElement({ id: module.id, title: module.title, x, y }, track, false, filteredSet.has(module.id));
+        
+        const prevRadius = modIdx === 0 ? 0 : radiusStart + radiusStep * modIdx;
+        const prevX = modIdx === 0 ? center.x : center.x + Math.cos(angle) * prevRadius;
+        const prevY = modIdx === 0 ? center.y : center.y + Math.sin(angle) * prevRadius;
+        connectors.push({ x1: prevX, y1: prevY, x2: x, y2: y, color: track.color || '#ffb347' });
+      });
+    });
+
+    drawConnectors(connectors);
     applyPan();
-  });
-  const endPan = e => {
-    if (!panState.active) return;
-    panState.active = false;
-    panState.originX = panState.x;
-    panState.originY = panState.y;
-    try {
-      treeViewport.releasePointerCapture(e.pointerId);
-    } catch {}
-  };
-  treeViewport.addEventListener('pointerup', endPan);
-  treeViewport.addEventListener('pointerleave', endPan);
-}
-
-function applyPan() {
-  const transform = `translate(${panState.x}px, ${panState.y}px)`;
-  if (treeLines) treeLines.style.transform = transform;
-  if (treeNodes) treeNodes.style.transform = transform;
-}
-
-function setupAdmin() {
-  updateTokenStatus();
-  hideAdminPanel();
-  adminToggle?.addEventListener('click', () => openAdminLogin(true));
-  adminLoginClose?.addEventListener('click', () => closeAdminLogin());
-  if (adminLoginForm) adminLoginForm.addEventListener('submit', handleAdminLogin);
-}
-
-function handleAdminLogin(e) {
-  e.preventDefault();
-  const submitted = tokenInput.value.trim();
-  if (submitted !== '1234') {
-    updateTokenStatus('Incorrect password. Hint: 1234');
-    return;
   }
-  state.adminToken = submitted;
-  updateTokenStatus('Editing unlocked.');
-  closeAdminLogin();
-  showAdminPanel();
-}
 
-function updateTokenStatus(message) {
-  if (tokenStatus) {
-    tokenStatus.textContent = message || 'Enter 1234 to unlock editing.';
+  function createNodeElement(entry, track, isRoot = false, visible = true) {
+    const node = document.createElement('div'); // Use div instead of button for non-interactive nodes
+    node.className = 'tree-node';
+    if (isRoot) node.classList.add('root-node');
+    if (!visible) node.classList.add('dimmed');
+    
+    node.style.left = `${entry.x - 95}px`;
+    node.style.top = `${entry.y - 26}px`;
+    node.innerHTML = `<strong>${entry.title}</strong><span>${isRoot ? entry.subtitle : (track?.title || '')}</span>`;
+    
+    elements.treeNodes.appendChild(node);
   }
-}
 
-function openAdminLogin(focusInput = false) {
-  adminLoginPage?.classList.add('open');
-  adminLoginPage?.setAttribute('aria-hidden', 'false');
-  if (focusInput) {
-    setTimeout(() => tokenInput?.focus(), 150);
+  function drawConnectors(connectors) {
+    const ns = 'http://www.w3.org/2000/svg';
+    connectors.forEach(conn => {
+      const path = document.createElementNS(ns, 'path');
+      path.setAttribute('d', `M ${conn.x1} ${conn.y1} L ${conn.x2} ${conn.y2}`);
+      path.setAttribute('fill', 'none');
+      path.setAttribute('stroke', conn.color || 'rgba(0,0,0,0.2)');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('opacity', '0.35');
+      elements.treeLines.appendChild(path);
+    });
   }
-}
 
-function closeAdminLogin() {
-  adminLoginPage?.classList.remove('open');
-  adminLoginPage?.setAttribute('aria-hidden', 'true');
-}
-
-function showAdminPanel() {
-  adminPanel?.classList.remove('hidden');
-  adminPanel?.scrollIntoView({ behavior: 'smooth' });
-}
-
-function hideAdminPanel() {
-  adminPanel?.classList.add('hidden');
-}
-
-function setupModuleSelect() {
-  if (!moduleSelect) return;
-  moduleSelect.addEventListener('change', e => {
-    e.target.value === 'new' ? resetModuleForm() : hydrateModuleForm(e.target.value);
-  });
-}
-
-function fillAdminSelects() {
-  if (!moduleTrack || !moduleSelect) return;
-  moduleTrack.innerHTML = state.data.tracks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
-  const options = ['<option value="new">New module</option>']
-    .concat(state.data.tutorials.map(t => `<option value="${t.id}">${t.title}</option>`));
-  moduleSelect.innerHTML = options.join('');
-}
-
-function resetModuleForm() {
-  moduleSelect.value = 'new';
-  moduleTitle.value = '';
-  moduleSummary.value = '';
-  moduleStatusEl.value = 'draft';
-  moduleLevel.value = '';
-  moduleDuration.value = '';
-  moduleTags.value = '';
-  moduleHighlight.value = '';
-  moduleOwner.value = '';
-  moduleTrack.selectedIndex = 0;
-  renderLinkFields([]);
-  moduleMessage.textContent = 'Editing new module.';
-}
-
-function hydrateModuleForm(moduleId) {
-  const module = state.data.tutorials.find(t => t.id === moduleId);
-  if (!module) {
-    resetModuleForm();
-    return;
+  function applyFilters() {
+    const term = state.filters.search.toLowerCase();
+    return state.data.tutorials.filter(t => {
+      const statusOk = state.filters.status === 'all' || t.status === state.filters.status;
+      const trackOk = state.filters.track === 'all' || t.trackId === state.filters.track;
+      const text = `${t.title} ${t.summary} ${(t.tags || []).join(' ')} ${t.owner || ''}`.toLowerCase();
+      const searchOk = !term || text.includes(term);
+      return statusOk && trackOk && searchOk;
+    });
   }
-  moduleTitle.value = module.title || '';
-  moduleSummary.value = module.summary || '';
-  moduleStatusEl.value = module.status || 'draft';
-  moduleLevel.value = module.level || '';
-  moduleDuration.value = module.duration || '';
-  moduleTags.value = (module.tags || []).join(', ');
-  moduleHighlight.value = module.highlight || '';
-  moduleOwner.value = module.owner || '';
-  moduleTrack.value = module.trackId || state.data.tracks[0]?.id || '';
-  renderLinkFields(module.links || []);
-  moduleMessage.textContent = `Editing ${module.title}`;
-}
-
-function renderLinkFields(links) {
-  linkFields.innerHTML = '';
-  const list = links.length ? links : [{ label: '', url: '' }];
-  list.forEach(link => addLinkField(link));
-}
-
-function addLinkField(link = { label: '', url: '' }) {
-  const row = document.createElement('div');
-  row.className = 'link-fields';
-  row.innerHTML = `
-    <input placeholder="Label" value="${link.label || ''}" class="link-label">
-    <input placeholder="https://..." value="${link.url || ''}" class="link-url">
-    <button type="button" class="remove">Remove</button>
-  `;
-  row.querySelector('.remove').addEventListener('click', () => row.remove());
-  linkFields.appendChild(row);
-}
-
-function collectLinks() {
-  return [...linkFields.querySelectorAll('.link-fields')]
-    .map(row => {
-      const label = row.querySelector('.link-label').value.trim();
-      const url = row.querySelector('.link-url').value.trim();
-      return label || url ? { label, url } : null;
-    })
-    .filter(Boolean);
-}
-
-async function saveModule(e) {
-  e.preventDefault();
-  if (state.adminToken !== '1234') {
-    moduleMessage.textContent = 'Enter the password (1234) before saving.';
-    return;
+  
+  function statusClass(status) {
+    return status === 'ready' ? 'status-ready' : status === 'in-review' ? 'status-in-review' : 'status-draft';
   }
-  const id = moduleSelect.value;
-  const payload = {
-    title: moduleTitle.value.trim(),
-    trackId: moduleTrack.value,
-    summary: moduleSummary.value.trim(),
-    status: moduleStatusEl.value,
-    level: moduleLevel.value.trim(),
-    duration: moduleDuration.value.trim(),
-    tags: moduleTags.value.split(',').map(t => t.trim()).filter(Boolean),
-    links: collectLinks(),
-    highlight: moduleHighlight.value.trim(),
-    owner: moduleOwner.value.trim()
-  };
-  const isNew = id === 'new';
-  const url = isNew ? '/api/tutorials' : `/api/tutorials/${id}`;
-  const method = isNew ? 'POST' : 'PUT';
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json', 'x-admin-token': state.adminToken },
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) {
-    moduleMessage.textContent = `Save failed: ${res.status}`;
-    return;
-  }
-  moduleMessage.textContent = 'Saved.';
-  await loadData();
-  if (isNew) resetModuleForm(); else hydrateModuleForm(id);
-}
 
-async function deleteModule() {
-  const id = moduleSelect.value;
-  if (id === 'new') {
-    moduleMessage.textContent = 'Pick a module to delete.';
-    return;
+  function scoreStatus(status) {
+    return status === 'ready' ? 0 : status === 'in-review' ? 1 : 'draft' ? 2 : 3;
   }
-  if (state.adminToken !== '1234') {
-    moduleMessage.textContent = 'Enter the password (1234) before deleting.';
-    return;
-  }
-  const res = await fetch(`/api/tutorials/${id}`, {
-    method: 'DELETE',
-    headers: { 'x-admin-token': state.adminToken }
-  });
-  if (!res.ok) {
-    moduleMessage.textContent = `Delete failed: ${res.status}`;
-    return;
-  }
-  moduleMessage.textContent = 'Deleted.';
-  await loadData();
-  resetModuleForm();
-}
 
-async function saveTrack(e) {
-  e.preventDefault();
-  if (state.adminToken !== '1234') {
-    trackMessage.textContent = 'Enter the password (1234) before saving.';
-    return;
+  function setupPan() {
+    if (!elements.treeViewport) return;
+    const viewport = elements.treeViewport;
+    viewport.addEventListener('pointerdown', e => {
+      if (e.target.closest('.tree-node')) return;
+      panState.active = true;
+      panState.startX = e.clientX;
+      panState.startY = e.clientY;
+      viewport.setPointerCapture(e.pointerId);
+    });
+    viewport.addEventListener('pointermove', e => {
+      if (!panState.active) return;
+      const dx = e.clientX - panState.startX;
+      const dy = e.clientY - panState.startY;
+      panState.x = panState.originX + dx;
+      panState.y = panState.originY + dy;
+      applyPan();
+    });
+    const endPan = e => {
+      if (!panState.active) return;
+      panState.active = false;
+      panState.originX = panState.x;
+      panState.originY = panState.y;
+      try { viewport.releasePointerCapture(e.pointerId); } catch {}
+    };
+    viewport.addEventListener('pointerup', endPan);
+    viewport.addEventListener('pointerleave', endPan);
   }
-  const payload = {
-    title: trackTitle.value.trim(),
-    description: trackDescription.value.trim(),
-    focus: trackFocus.value.trim(),
-    lead: trackLead.value.trim(),
-    color: trackColor.value
-  };
-  const res = await fetch('/api/tracks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-admin-token': state.adminToken },
-    body: JSON.stringify(payload)
-  });
-  if (!res.ok) {
-    trackMessage.textContent = `Save failed: ${res.status}`;
-    return;
+
+  function applyPan() {
+    const transform = `translate(${panState.x}px, ${panState.y}px)`;
+    if (elements.treeLines) elements.treeLines.style.transform = transform;
+    if (elements.treeNodes) elements.treeNodes.style.transform = transform;
   }
-  trackMessage.textContent = 'Track added.';
-  trackForm.reset();
-  trackColor.value = '#ff7a18';
-  await loadData();
-}
 
-function setupAdminForms() {
-  moduleForm?.addEventListener('submit', saveModule);
-  deleteModuleBtn?.addEventListener('click', deleteModule);
-  resetModuleBtn?.addEventListener('click', resetModuleForm);
-  addLinkBtn?.addEventListener('click', () => addLinkField());
-  trackForm?.addEventListener('submit', saveTrack);
-}
+  // --- Admin Logic ---
+  function setupAdminLogin() {
+    elements.adminToggle?.addEventListener('click', () => {
+      elements.adminLoginPage?.classList.add('open');
+      elements.adminLoginPage?.setAttribute('aria-hidden', 'false');
+      setTimeout(() => elements.tokenInput?.focus(), 150);
+    });
+    elements.adminLoginClose?.addEventListener('click', () => {
+        elements.adminLoginPage?.classList.remove('open');
+        elements.adminLoginPage?.setAttribute('aria-hidden', 'true');
+    });
+    elements.adminLoginForm?.addEventListener('submit', e => {
+      e.preventDefault();
+      if (elements.tokenInput.value.trim() === '1234') {
+        window.open('?mode=admin', '_blank');
+        elements.adminLoginClose.click();
+      } else {
+        elements.tokenStatus.textContent = 'Incorrect password.';
+      }
+    });
+  }
 
-function init() {
-  setupStatusFilters();
-  setupSearch();
-  setupListButton();
-  setupPan();
-  setupAdmin();
-  setupModuleSelect();
-  setupAdminForms();
-  addLinkField();
-  drawerClose?.addEventListener('click', closeDrawer);
-  nodeDrawer?.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeDrawer();
-  });
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && nodeDrawer?.classList.contains('open')) closeDrawer();
-  });
-  loadData();
-}
+  function fillAdminSelects() {
+    if (!elements.moduleTrack || !elements.moduleSelect) return;
+    elements.moduleTrack.innerHTML = state.data.tracks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
+    const options = ['<option value="new">New module</option>']
+      .concat(state.data.tutorials.map(t => `<option value="${t.id}">${t.title}</option>`));
+    elements.moduleSelect.innerHTML = options.join('');
+  }
 
-window.addEventListener('resize', () => renderTree());
-init();
+  function resetModuleForm() {
+    elements.moduleSelect.value = 'new';
+    elements.moduleForm.reset();
+    renderLinkFields([]);
+    elements.moduleMessage.textContent = 'Editing new module.';
+  }
+
+  function hydrateModuleForm(moduleId) {
+    const module = state.data.tutorials.find(t => t.id === moduleId);
+    if (!module) return resetModuleForm();
+    
+    elements.moduleTitle.value = module.title || '';
+    elements.moduleSummary.value = module.summary || '';
+    elements.moduleStatusEl.value = module.status || 'draft';
+    elements.moduleLevel.value = module.level || '';
+    elements.moduleDuration.value = module.duration || '';
+    elements.moduleTags.value = (module.tags || []).join(', ');
+    elements.moduleHighlight.value = module.highlight || '';
+    elements.moduleOwner.value = module.owner || '';
+    elements.moduleTrack.value = module.trackId || state.data.tracks[0]?.id || '';
+    renderLinkFields(module.links || []);
+    elements.moduleMessage.textContent = `Editing ${module.title}`;
+  }
+
+  function renderLinkFields(links) {
+    elements.linkFields.innerHTML = '';
+    (links?.length ? links : [{ label: '', url: '' }]).forEach(link => addLinkField(link));
+  }
+
+  function addLinkField(link = { label: '', url: '' }) {
+    const row = document.createElement('div');
+    row.className = 'link-fields';
+    row.innerHTML = `
+      <input placeholder="Label" value="${link.label || ''}" class="link-label">
+      <input placeholder="https://..." value="${link.url || ''}" class="link-url">
+      <button type="button" class="remove">Remove</button>
+    `;
+    row.querySelector('.remove').addEventListener('click', () => row.remove());
+    elements.linkFields.appendChild(row);
+  }
+
+  function collectLinks() {
+    return [...elements.linkFields.querySelectorAll('.link-fields')]
+      .map(row => ({
+        label: row.querySelector('.link-label').value.trim(),
+        url: row.querySelector('.link-url').value.trim(),
+      }))
+      .filter(link => link.label || link.url);
+  }
+
+  async function saveModule(e) {
+    e.preventDefault();
+    if (state.adminToken !== '1234') return;
+    
+    const id = elements.moduleSelect.value;
+    const payload = {
+      title: elements.moduleTitle.value.trim(),
+      trackId: elements.moduleTrack.value,
+      summary: elements.moduleSummary.value.trim(),
+      status: elements.moduleStatusEl.value,
+      level: elements.moduleLevel.value.trim(),
+      duration: elements.moduleDuration.value.trim(),
+      tags: elements.moduleTags.value.split(',').map(t => t.trim()).filter(Boolean),
+      links: collectLinks(),
+      highlight: elements.moduleHighlight.value.trim(),
+      owner: elements.moduleOwner.value.trim(),
+    };
+
+    const isNew = id === 'new';
+    const url = isNew ? '/api/tutorials' : `/api/tutorials/${id}`;
+    const method = isNew ? 'POST' : 'PUT';
+
+    const res = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': state.adminToken },
+      body: JSON.stringify(payload)
+    });
+
+    elements.moduleMessage.textContent = res.ok ? 'Saved.' : `Save failed: ${res.status}`;
+    if (res.ok) {
+      await loadData();
+      isNew ? resetModuleForm() : hydrateModuleForm(id);
+    }
+  }
+
+  async function deleteModule() {
+    const id = elements.moduleSelect.value;
+    if (id === 'new' || state.adminToken !== '1234') return;
+    
+    const res = await fetch(`/api/tutorials/${id}`, {
+      method: 'DELETE',
+      headers: { 'x-admin-token': state.adminToken }
+    });
+
+    elements.moduleMessage.textContent = res.ok ? 'Deleted.' : `Delete failed: ${res.status}`;
+    if (res.ok) {
+      await loadData();
+      resetModuleForm();
+    }
+  }
+
+  async function saveTrack(e) {
+    e.preventDefault();
+    if (state.adminToken !== '1234') return;
+    
+    const payload = {
+      title: elements.trackTitle.value.trim(),
+      description: elements.trackDescription.value.trim(),
+      focus: elements.trackFocus.value.trim(),
+      lead: elements.trackLead.value.trim(),
+      color: elements.trackColor.value,
+    };
+    
+    const res = await fetch('/api/tracks', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'x-admin-token': state.adminToken },
+      body: JSON.stringify(payload)
+    });
+    
+    elements.trackMessage.textContent = res.ok ? 'Track added.' : `Save failed: ${res.status}`;
+    if (res.ok) {
+      elements.trackForm.reset();
+      elements.trackColor.value = '#ff7a18';
+      await loadData();
+    }
+  }
+
+  // --- Initialization ---
+  function init() {
+    if (isAdminMode) {
+      // Admin Mode: show backstage, hide map
+      elements.mapView?.classList.add('hidden');
+      elements.backstageView?.classList.remove('hidden');
+      document.body.classList.add('admin-mode');
+      elements.backToTreeBtn?.classList.add('hidden'); // Hide back button
+      
+      // Setup admin forms
+      elements.moduleForm?.addEventListener('submit', saveModule);
+      elements.deleteModuleBtn?.addEventListener('click', deleteModule);
+      elements.resetModuleBtn?.addEventListener('click', resetModuleForm);
+      elements.addLinkBtn?.addEventListener('click', () => addLinkField());
+      elements.trackForm?.addEventListener('submit', saveTrack);
+      elements.moduleSelect?.addEventListener('change', e => e.target.value === 'new' ? resetModuleForm() : hydrateModuleForm(e.target.value));
+      addLinkField();
+
+    } else {
+      // Viewer Mode: show map, hide backstage
+      elements.mapView?.classList.remove('hidden');
+      elements.backstageView?.classList.add('hidden');
+      document.body.classList.remove('admin-mode');
+
+      // Setup viewer interactions
+      elements.statusFiltersEl?.querySelectorAll('.chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          state.filters.status = chip.dataset.status;
+          elements.statusFiltersEl.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('active', btn === chip));
+          renderTree();
+        });
+      });
+      elements.searchInput?.addEventListener('input', e => {
+        state.filters.search = e.target.value;
+        renderTree();
+      });
+      setupPan();
+      setupAdminLogin();
+      window.addEventListener('resize', renderTree);
+    }
+    loadData();
+  }
+
+  init();
+});
