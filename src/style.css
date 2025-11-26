@@ -781,3 +781,11 @@ body.admin-mode #mapView {
   100% { box-shadow: 0 0 0 0 rgba(255, 122, 24, 0); }
 }
 
+
+/* Adjust filters for List View */
+.list-view .filters {
+  border: none;
+  background: transparent;
+  padding: 0 0 24px 0;
+}
+

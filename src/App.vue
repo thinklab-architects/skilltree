@@ -90,27 +90,6 @@ onMounted(() => {
         />
       </section>
 
-      <section v-if="viewMode === 'list'" class="list-view">
-        <div class="container">
-          <h2>All Tutorials</h2>
-          <div class="tutorial-grid">
-            <div 
-              v-for="tutorial in filteredTutorials" 
-              :key="tutorial.id" 
-              class="tutorial-card"
-              @click="openSidebar(tutorial.id)"
-            >
-              <h3>{{ tutorial.title }}</h3>
-              <p class="meta">{{ tutorial.level }} · {{ tutorial.duration }}</p>
-              <p class="summary">{{ tutorial.summary }}</p>
-              <div class="tags">
-                <span v-for="tag in tutorial.tags" :key="tag" class="tag">{{ tag }}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section class="filters">
         <div class="filter-row">
           <div class="filter-group">
@@ -140,6 +119,29 @@ onMounted(() => {
           </div>
         </div>
       </section>
+
+      <section v-if="viewMode === 'list'" class="list-view">
+        <div class="container">
+          <h2>All Tutorials</h2>
+          <div class="tutorial-grid">
+            <div 
+              v-for="tutorial in filteredTutorials" 
+              :key="tutorial.id" 
+              class="tutorial-card"
+              @click="openSidebar(tutorial.id)"
+            >
+              <h3>{{ tutorial.title }}</h3>
+              <p class="meta">{{ tutorial.level }} · {{ tutorial.duration }}</p>
+              <p class="summary">{{ tutorial.summary }}</p>
+              <div class="tags">
+                <span v-for="tag in tutorial.tags" :key="tag" class="tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
       
       <section class="track-grid">
         <!-- Track grid content if needed, currently empty in original app.js logic for viewer -->
