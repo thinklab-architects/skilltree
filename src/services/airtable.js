@@ -6,11 +6,14 @@ const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
 let base = null
 
 if (apiKey && baseId) {
+    console.log('Airtable configured with Base ID:', baseId)
     Airtable.configure({
         apiKey: apiKey,
         endpointUrl: 'https://api.airtable.com',
     })
     base = Airtable.base(baseId)
+} else {
+    console.warn('Airtable configuration missing. API Key:', !!apiKey, 'Base ID:', !!baseId)
 }
 
 export const isAirtableConfigured = () => !!base
