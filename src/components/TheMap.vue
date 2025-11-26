@@ -109,7 +109,7 @@ const initMap = () => {
 
   // Simulation
   simulation = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 250 : 120))
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 125 : 120))
     .force('charge', d3.forceManyBody().strength(-2000))
     .force('collide', d3.forceCollide().radius(d => d.r + 40))
     .force('x', d3.forceX())
