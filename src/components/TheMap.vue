@@ -22,6 +22,9 @@ const shards = [
   'M-5,-22 L18,-10 L15,20 L-10,24 L-22,-5 Z'
 ]
 
+// Heptagon (7-sided) for hover state
+const heptagon = 'M0,-25 L18,-15 L24,0 L18,18 L0,25 L-18,18 L-24,0 L-18,-15 Z'
+
 const getShardPath = (id) => {
   const index = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % shards.length
   return shards[index]
@@ -253,15 +256,17 @@ const initMap = () => {
   // Hover effects
   node.on('mouseenter', function(event, d) {
     if (d.type === 'tutorial') {
-      // Highlight the node
+      // Highlight the node - morph to heptagon
       d3.select(this).select('path')
+        .attr('d', heptagon)
         .attr('fill', 'rgba(0, 0, 0, 0.7)') // Dark semi-transparent background
-        .attr('transform', 'scale(2.2)')
+        .attr('transform', 'scale(2.5)')
         .style('filter', `drop-shadow(0 0 15px ${d.color})`)
         
       d3.select(this).select('text')
         .attr('fill', 'white') // Text turns white
         .style('font-weight', 'bold')
+        .style('font-size', '13px') // Larger text on hover
       
       // Highlight all links in the same track
       const trackClass = `track-${d.color.replace('#', '')}`
@@ -273,15 +278,17 @@ const initMap = () => {
   })
   .on('mouseleave', function(event, d) {
     if (d.type === 'tutorial') {
-      // Reset the node
+      // Reset the node - back to pentagon
       d3.select(this).select('path')
+        .attr('d', getShardPath(d.id))
         .attr('fill', '#fff')
         .attr('transform', 'scale(1.8)')
         .style('filter', `drop-shadow(0 0 5px ${d.color})`)
         
       d3.select(this).select('text')
         .attr('fill', '#444') // Revert to dark gray
-        .style('font-weight', 'normal')
+        .style('font-weight', 'bold') // Keep bold as default
+        .style('font-size', '11px') // Back to normal size
       
       // Reset all links in the same track
       const trackClass = `track-${d.color.replace('#', '')}`
