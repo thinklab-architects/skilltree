@@ -110,8 +110,9 @@ const handleWheel = (e) => {
   const newScale = Math.min(Math.max(0.2, panState.value.scale - e.deltaY * zoomSpeed), 3)
   
   const rect = viewport.value.getBoundingClientRect()
-  const mouseX = e.clientX - rect.left
-  const mouseY = e.clientY - rect.top
+  // Zoom towards center of viewport, not mouse position
+  const mouseX = rect.width / 2
+  const mouseY = rect.height / 2
   
   const scaleRatio = newScale / panState.value.scale
   
