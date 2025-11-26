@@ -8,8 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tracksEl: document.getElementById('tracks'),
     trackFiltersEl: document.getElementById('trackFilters'),
     statusFiltersEl: document.getElementById('statusFilters'),
-    heroMetricsEl: document.getElementById('heroMetrics'),
-    miniListEl: document.getElementById('miniList'),
+
     searchInput: document.getElementById('searchInput'),
     adminToggle: document.getElementById('adminToggle'),
     adminLoginPage: document.getElementById('adminLoginPage'),
@@ -64,12 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
       const res = await fetch(dataUrl);
       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
       state.data = await res.json();
-      
+
       if (isAdminMode) {
         fillAdminSelects();
       } else {
         renderFilters();
-        renderMetrics();
+
         renderTree();
       }
     } catch (err) {
@@ -106,36 +105,14 @@ document.addEventListener('DOMContentLoaded', () => {
     return btn;
   }
 
-  function renderMetrics() {
-    if (!elements.heroMetricsEl || !elements.miniListEl) return;
-    const { tutorials } = state.data;
-    const ready = tutorials.filter(t => t.status === 'ready').length;
-    const review = tutorials.filter(t => t.status === 'in-review').length;
-    const draft = tutorials.filter(t => t.status === 'draft').length;
-    elements.heroMetricsEl.innerHTML = `
-      <div class="metric"><div class="label">Tutorials</div><div class="value">${tutorials.length}</div></div>
-      <div class="metric"><div class="label">Ready</div><div class="value">${ready}</div></div>
-      <div class="metric"><div class="label">In review</div><div class="value">${review}</div></div>
-      <div class="metric"><div class="label">Draft</div><div class="value">${draft}</div></div>
-    `;
-    const featured = [...tutorials].sort((a, b) => scoreStatus(a.status) - scoreStatus(b.status)).slice(0, 4);
-    elements.miniListEl.innerHTML = featured.map(item => `
-      <li class="mini-item">
-        <div>
-          <div class="title">${item.title}</div>
-          <div class="tag">${statusLabels[item.status] || item.status} · ${item.duration || 'time tbd'}</div>
-        </div>
-        <span class="status-dot ${statusClass(item.status)}"></span>
-      </li>
-    `).join('');
-  }
+
 
   function renderTree() {
     if (!elements.treeViewport || !elements.treeLines || !elements.treeNodes) return;
     const tracks = state.data.tracks;
     const tutorials = state.data.tutorials;
     const filteredSet = new Set(applyFilters().map(t => t.id));
-    
+
     const viewportWidth = elements.treeViewport.clientWidth || 960;
     const viewportHeight = elements.treeViewport.clientHeight || 600;
     const width = Math.max(viewportWidth, 1400);
@@ -161,13 +138,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const modules = tutorials.filter(t => t.trackId === track.id);
       const angle = angleStep * idx - Math.PI / 2;
       if (!modules.length) return;
-      
+
       modules.forEach((module, modIdx) => {
         const radius = radiusStart + radiusStep * (modIdx + 1);
         const x = center.x + Math.cos(angle) * radius;
         const y = center.y + Math.sin(angle) * radius;
         createNodeElement({ id: module.id, title: module.title, x, y }, track, false, filteredSet.has(module.id));
-        
+
         const prevRadius = modIdx === 0 ? 0 : radiusStart + radiusStep * modIdx;
         const prevX = modIdx === 0 ? center.x : center.x + Math.cos(angle) * prevRadius;
         const prevY = modIdx === 0 ? center.y : center.y + Math.sin(angle) * prevRadius;
@@ -184,11 +161,11 @@ document.addEventListener('DOMContentLoaded', () => {
     node.className = 'tree-node';
     if (isRoot) node.classList.add('root-node');
     if (!visible) node.classList.add('dimmed');
-    
+
     node.style.left = `${entry.x - 95}px`;
     node.style.top = `${entry.y - 26}px`;
     node.innerHTML = `<strong>${entry.title}</strong><span>${isRoot ? entry.subtitle : (track?.title || '')}</span>`;
-    
+
     elements.treeNodes.appendChild(node);
   }
 
@@ -216,7 +193,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return statusOk && trackOk && searchOk;
     });
   }
-  
+
   function statusClass(status) {
     return status === 'ready' ? 'status-ready' : status === 'in-review' ? 'status-in-review' : 'status-draft';
   }
@@ -248,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
       panState.active = false;
       panState.originX = panState.x;
       panState.originY = panState.y;
-      try { viewport.releasePointerCapture(e.pointerId); } catch {}
+      try { viewport.releasePointerCapture(e.pointerId); } catch { }
     };
     viewport.addEventListener('pointerup', endPan);
     viewport.addEventListener('pointerleave', endPan);
@@ -268,8 +245,8 @@ document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => elements.tokenInput?.focus(), 150);
     });
     elements.adminLoginClose?.addEventListener('click', () => {
-        elements.adminLoginPage?.classList.remove('open');
-        elements.adminLoginPage?.setAttribute('aria-hidden', 'true');
+      elements.adminLoginPage?.classList.remove('open');
+      elements.adminLoginPage?.setAttribute('aria-hidden', 'true');
     });
     elements.adminLoginForm?.addEventListener('submit', e => {
       e.preventDefault();
@@ -300,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function hydrateModuleForm(moduleId) {
     const module = state.data.tutorials.find(t => t.id === moduleId);
     if (!module) return resetModuleForm();
-    
+
     elements.moduleTitle.value = module.title || '';
     elements.moduleSummary.value = module.summary || '';
     elements.moduleStatusEl.value = module.status || 'draft';
@@ -343,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function saveModule(e) {
     e.preventDefault();
     if (state.adminToken !== '1234') return;
-    
+
     const id = elements.moduleSelect.value;
     const payload = {
       title: elements.moduleTitle.value.trim(),
@@ -378,7 +355,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function deleteModule() {
     const id = elements.moduleSelect.value;
     if (id === 'new' || state.adminToken !== '1234') return;
-    
+
     const res = await fetch(`/api/tutorials/${id}`, {
       method: 'DELETE',
       headers: { 'x-admin-token': state.adminToken }
@@ -394,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
   async function saveTrack(e) {
     e.preventDefault();
     if (state.adminToken !== '1234') return;
-    
+
     const payload = {
       title: elements.trackTitle.value.trim(),
       description: elements.trackDescription.value.trim(),
@@ -402,13 +379,13 @@ document.addEventListener('DOMContentLoaded', () => {
       lead: elements.trackLead.value.trim(),
       color: elements.trackColor.value,
     };
-    
+
     const res = await fetch('/api/tracks', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-admin-token': state.adminToken },
       body: JSON.stringify(payload)
     });
-    
+
     elements.trackMessage.textContent = res.ok ? 'Track added.' : `Save failed: ${res.status}`;
     if (res.ok) {
       elements.trackForm.reset();
@@ -425,7 +402,7 @@ document.addEventListener('DOMContentLoaded', () => {
       elements.backstageView?.classList.remove('hidden');
       document.body.classList.add('admin-mode');
       elements.backToTreeBtn?.classList.add('hidden'); // Hide back button
-      
+
       // Setup admin forms
       elements.moduleForm?.addEventListener('submit', saveModule);
       elements.deleteModuleBtn?.addEventListener('click', deleteModule);
