@@ -63,7 +63,8 @@ p {
 .brand .dot {
   width: 48px;
   height: 48px;
-  border-radius: 50%;
+  /* border-radius: 50%; Removed for pentagon */
+  clip-path: polygon(50% 0%, 100% 38%, 82% 100%, 18% 100%, 0% 38%);
   background: linear-gradient(135deg, var(--accent), #ffc371);
   box-shadow: 0 0 30px rgba(255, 122, 24, 0.35);
 }
