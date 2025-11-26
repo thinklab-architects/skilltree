@@ -10,9 +10,10 @@ document.addEventListener('DOMContentLoaded', () => {
     trackFiltersEl: document.getElementById('trackFilters'),
     // statusFiltersEl removed
     searchInput: document.getElementById('searchInput'),
-    detailModal: document.getElementById('detailModal'),
-    closeModal: document.getElementById('closeModal'),
-    modalContent: document.getElementById('modalContent'),
+    nodeSidebar: document.getElementById('nodeSidebar'),
+    closeSidebar: document.getElementById('closeSidebar'),
+    sidebarContent: document.getElementById('sidebarContent'),
+    sidebarHeaderContent: document.getElementById('sidebarHeaderContent'),
 
     searchInput: document.getElementById('searchInput'),
     adminToggle: document.getElementById('adminToggle'),
@@ -181,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!isRoot && visible) {
       node.addEventListener('click', (e) => {
         e.stopPropagation();
-        showModal(entry.id);
+        showSidebar(entry.id);
       });
     }
 
@@ -280,7 +281,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (elements.treeLines) elements.treeLines.style.strokeWidth = `${2 / panState.scale}px`;
   }
 
-  function showModal(id) {
+  function showSidebar(id) {
     const item = state.data.tutorials.find(t => t.id === id);
     if (!item) return;
 
@@ -288,9 +289,12 @@ document.addEventListener('DOMContentLoaded', () => {
       `<a href="${l.url}" target="_blank" class="resource-link">🔗 ${l.label || 'Link'}</a>`
     ).join('');
 
-    elements.modalContent.innerHTML = `
+    elements.sidebarHeaderContent.innerHTML = `
       <p class="eyebrow">${item.level || 'Tutorial'}</p>
       <h2>${item.title}</h2>
+    `;
+
+    elements.sidebarContent.innerHTML = `
       <p class="lede">${item.summary || ''}</p>
       <div class="tag-row" style="margin: 16px 0;">
         ${(item.tags || []).map(t => `<span class="pill-sm">${t}</span>`).join('')}
@@ -302,19 +306,20 @@ document.addEventListener('DOMContentLoaded', () => {
       ${item.highlight ? `<div style="margin-top: 20px; padding: 12px; background: #fffdf8; border: 1px solid #eee; border-radius: 8px;"><p><strong>Highlight:</strong> ${item.highlight}</p></div>` : ''}
     `;
 
-    elements.detailModal.classList.add('open');
-    elements.detailModal.setAttribute('aria-hidden', 'false');
+    elements.nodeSidebar.classList.add('open');
+    elements.nodeSidebar.setAttribute('aria-hidden', 'false');
   }
 
-  elements.closeModal?.addEventListener('click', () => {
-    elements.detailModal.classList.remove('open');
-    elements.detailModal.setAttribute('aria-hidden', 'true');
+  elements.closeSidebar?.addEventListener('click', () => {
+    elements.nodeSidebar.classList.remove('open');
+    elements.nodeSidebar.setAttribute('aria-hidden', 'true');
   });
 
-  elements.detailModal?.addEventListener('click', (e) => {
-    if (e.target === elements.detailModal) {
-      elements.detailModal.classList.remove('open');
-      elements.detailModal.setAttribute('aria-hidden', 'true');
+  // Close sidebar when clicking on map background
+  elements.treeViewport?.addEventListener('click', (e) => {
+    if (e.target === elements.treeViewport || e.target.id === 'treeLines') {
+      elements.nodeSidebar.classList.remove('open');
+      elements.nodeSidebar.setAttribute('aria-hidden', 'true');
     }
   });
 
