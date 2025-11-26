@@ -527,6 +527,18 @@ document.addEventListener('DOMContentLoaded', () => {
       setupPan();
       setupAdminLogin();
       window.addEventListener('resize', renderTree);
+
+      // Test Sidebar Button
+      document.getElementById('testSidebar')?.addEventListener('click', () => {
+        console.log('Test Sidebar clicked');
+        // Use first tutorial id or a mock one
+        const firstId = state.data.tutorials[0]?.id;
+        if (firstId) {
+          showSidebar(firstId);
+        } else {
+          console.warn('No tutorials loaded to test sidebar');
+        }
+      });
     }
     loadData();
   }
