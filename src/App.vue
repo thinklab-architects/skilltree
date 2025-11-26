@@ -63,10 +63,6 @@ onMounted(() => {
     <main v-if="!isAdminMode" id="mapView">
       <section class="tree-stage">
         <div class="tree-toolbar">
-          <div>
-            <p class="eyebrow">Radial explorer</p>
-            <p>Drag to explore the practice map. Tracks radiate from the center hub.</p>
-          </div>
         </div>
         
         <TheMap 
