@@ -10,14 +10,17 @@ const data = ref({ tracks: [], tutorials: [] })
 const filters = ref({ search: '', track: 'all' })
 const sidebarId = ref(null)
 const isSidebarOpen = ref(false)
+const dataSource = ref('Loading...')
 
 const loadData = async () => {
   try {
     if (isAirtableConfigured()) {
       console.log('Fetching from Airtable...')
+      dataSource.value = 'Source: Airtable'
       data.value = await fetchAirtableData()
     } else {
       console.log('Fetching from local JSON...')
+      dataSource.value = 'Source: Local JSON'
       const dataUrl = window.location.protocol === 'file:' || window.location.hostname.includes('github.io')
         ? 'data/trails.json'
         : '/api/trails'
@@ -116,6 +119,9 @@ onMounted(() => {
     <footer class="footer">
       <div>
         <a href="https://www.tlabarc.com/" target="_blank" rel="noopener noreferrer">THINKLAB ARCHITECT 之物建築</a>
+        <span style="font-size: 0.8em; opacity: 0.5; margin-left: 10px;">
+          ({{ dataSource }})
+        </span>
       </div>
     </footer>
   </div>
