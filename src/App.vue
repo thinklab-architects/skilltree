@@ -7,9 +7,15 @@ import TheSidebar from './components/TheSidebar.vue'
 import { fetchAirtableData, isAirtableConfigured } from './services/airtable'
 
 const data = ref({ tracks: [], tutorials: [] })
-const filters = ref({ search: '', track: 'all' })
+const filters = ref({ 
+  search: '', 
+  track: 'all',
+  selectedLevels: [],
+  selectedTags: []
+})
 const sidebarId = ref(null)
 const isSidebarOpen = ref(false)
+const isFilterPanelOpen = ref(false)
 const dataSource = ref('Loading...')
 const viewMode = ref('map') // 'map' or 'list'
 
@@ -40,8 +46,34 @@ const filteredTutorials = computed(() => {
     const trackOk = filters.value.track === 'all' || t.trackId === filters.value.track
     const text = `${t.title} ${t.summary} ${(t.tags || []).join(' ')} ${t.owner || ''}`.toLowerCase()
     const searchOk = !term || text.includes(term)
-    return trackOk && searchOk
+    
+    // Level filter
+    const levelOk = filters.value.selectedLevels.length === 0 || 
+                    filters.value.selectedLevels.includes(t.level)
+    
+    // Tags filter
+    const tagsOk = filters.value.selectedTags.length === 0 || 
+                   (t.tags && t.tags.some(tag => filters.value.selectedTags.includes(tag)))
+    
+    return trackOk && searchOk && levelOk && tagsOk
   })
+})
+
+// Get unique levels and tags
+const availableLevels = computed(() => {
+  const levels = new Set()
+  data.value.tutorials.forEach(t => {
+    if (t.level) levels.add(t.level)
+  })
+  return Array.from(levels).sort()
+})
+
+const availableTags = computed(() => {
+  const tags = new Set()
+  data.value.tutorials.forEach(t => {
+    if (t.tags) t.tags.forEach(tag => tags.add(tag))
+  })
+  return Array.from(tags).sort()
 })
 
 const openSidebar = (id) => {
@@ -65,6 +97,16 @@ onMounted(() => {
         <div class="header-search" v-if="viewMode === 'map'">
           <input type="search" v-model="filters.search" placeholder="Search...">
         </div>
+        <button 
+          v-if="viewMode === 'map'" 
+          class="pill ghost filter-toggle-btn"
+          @click="isFilterPanelOpen = !isFilterPanelOpen"
+        >
+          <span>🔍 Filters</span>
+          <span v-if="filters.selectedLevels.length + filters.selectedTags.length > 0" class="filter-badge">
+            {{ filters.selectedLevels.length + filters.selectedTags.length }}
+          </span>
+        </button>
         <div class="view-toggle">
           <button 
             class="toggle-btn" 
@@ -79,6 +121,51 @@ onMounted(() => {
         </div>
       </template>
     </TheHeader>
+    
+    <!-- Filter Panel -->
+    <div v-if="isFilterPanelOpen && viewMode === 'map'" class="filter-panel-overlay" @click="isFilterPanelOpen = false">
+      <div class="filter-panel" @click.stop>
+        <div class="filter-panel-header">
+          <h3>Filters</h3>
+          <button class="close-btn" @click="isFilterPanelOpen = false">✕</button>
+        </div>
+        
+        <div class="filter-section">
+          <h4>Level</h4>
+          <div class="filter-options">
+            <label v-for="level in availableLevels" :key="level" class="filter-checkbox">
+              <input 
+                type="checkbox" 
+                :value="level" 
+                v-model="filters.selectedLevels"
+              >
+              <span>{{ level }}</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="filter-section">
+          <h4>Tags</h4>
+          <div class="filter-options">
+            <label v-for="tag in availableTags" :key="tag" class="filter-checkbox">
+              <input 
+                type="checkbox" 
+                :value="tag" 
+                v-model="filters.selectedTags"
+              >
+              <span>{{ tag }}</span>
+            </label>
+          </div>
+        </div>
+        
+        <div class="filter-panel-footer">
+          <button 
+            class="pill ghost" 
+            @click="filters.selectedLevels = []; filters.selectedTags = []"
+          >Clear All</button>
+        </div>
+      </div>
+    </div>
     
     <main id="main-view" :class="{ 'full-screen': viewMode === 'map' }">
       <section v-if="viewMode === 'map'" class="tree-stage">
