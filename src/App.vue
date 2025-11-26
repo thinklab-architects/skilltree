@@ -69,7 +69,7 @@ onMounted(() => {
           <button 
             class="toggle-btn" 
             :class="{ active: viewMode === 'map' }"
-            @click="viewMode = 'map'"
+            @click="viewMode = 'map'; filters.track = 'all'"
           >Map View</button>
           <button 
             class="toggle-btn" 
