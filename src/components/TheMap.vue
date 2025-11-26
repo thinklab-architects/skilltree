@@ -168,23 +168,19 @@ const initMap = () => {
 
         
     } else if (d.type === 'track') {
-      el.append('path')
-        .attr('d', getShardPath(d.id))
-        .attr('transform', 'scale(3)')
-        .attr('fill', '#fff')
-        .attr('stroke', d.color)
-        .attr('stroke-width', 2)
-        .style('filter', `drop-shadow(0 0 8px ${d.color})`) // Glow effect
+      // Track Node: Just Text (No Shape)
+      // We keep the collision radius but don't render the shard
       
       el.append('text')
         .text(d.title)
         .attr('text-anchor', 'middle')
-        .attr('dy', 55)
+        .attr('dy', 5) // Centered
         .attr('fill', d.color)
-        .style('font-weight', 'bold')
+        .style('font-weight', '800')
         .style('font-size', '14px')
         .style('text-transform', 'uppercase')
         .style('text-shadow', '0 0 10px rgba(255,255,255,0.8)')
+        .style('pointer-events', 'none') // Let clicks pass through if needed, or keep it interactive
 
     } else {
       // Tutorial Node
