@@ -181,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!isRoot && visible) {
       node.addEventListener('click', (e) => {
+        console.log('Node clicked:', entry.id);
         e.stopPropagation();
         showSidebar(entry.id);
       });
@@ -282,8 +283,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function showSidebar(id) {
+    console.log('showSidebar called with:', id);
     const item = state.data.tutorials.find(t => t.id === id);
-    if (!item) return;
+    if (!item) {
+      console.error('Item not found for id:', id);
+      return;
+    }
 
     const linksHtml = (item.links || []).map(l =>
       `<a href="${l.url}" target="_blank" class="resource-link">🔗 ${l.label || 'Link'}</a>`
