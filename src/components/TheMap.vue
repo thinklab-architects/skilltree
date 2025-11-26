@@ -196,20 +196,54 @@ const initMap = () => {
         .style('transition', 'all 0.3s ease')
 
       if (d.visible) {
-        el.append('text')
-          .text(d.title)
+        const text = el.append('text')
           .attr('text-anchor', 'middle')
-          .attr('dy', 40)
           .attr('fill', '#444')
-          .style('font-size', '11px')
+          .style('font-size', '9px')
           .style('pointer-events', 'none')
           .style('text-shadow', '0 0 4px white')
-          .each(function(d) {
-            const self = d3.select(this)
-            if (self.text().length > 18) {
-              self.text(self.text().slice(0, 18) + '...')
+        
+        // Simple wrapping logic
+        const words = d.title.split(/\s+/)
+        let line = []
+        let lineNumber = 0
+        const lineHeight = 1.1 // ems
+        const width = 35 // max width in pixels approx
+        
+        // If single long word, just show it (maybe truncated)
+        if (words.length === 1) {
+             text.text(d.title.length > 8 ? d.title.slice(0, 8) + '..' : d.title)
+                 .attr('dy', '0.35em')
+        } else {
+            // Multi-word wrapping
+            let tspan = text.append('tspan').attr('x', 0).attr('dy', 0)
+            
+            // Very basic split for 2-3 lines max
+            if (d.title.length > 20) {
+                 // Force split
+                 const mid = Math.floor(d.title.length / 2)
+                 const splitIdx = d.title.indexOf(' ', mid) > -1 ? d.title.indexOf(' ', mid) : mid
+                 const l1 = d.title.slice(0, splitIdx)
+                 const l2 = d.title.slice(splitIdx).trim()
+                 
+                 text.append('tspan').attr('x', 0).attr('dy', '-0.2em').text(l1)
+                 text.append('tspan').attr('x', 0).attr('dy', '1.1em').text(l2.length > 10 ? l2.slice(0,9)+'..' : l2)
+            } else {
+                 text.text(d.title).attr('dy', '0.35em')
+                 // If text is too long for one line, split it
+                 if (d.title.length > 10) {
+                     const parts = d.title.split(' ')
+                     if (parts.length >= 2) {
+                         text.text('')
+                         const half = Math.ceil(parts.length / 2)
+                         const l1 = parts.slice(0, half).join(' ')
+                         const l2 = parts.slice(half).join(' ')
+                         text.append('tspan').attr('x', 0).attr('dy', '-0.2em').text(l1)
+                         text.append('tspan').attr('x', 0).attr('dy', '1.1em').text(l2)
+                     }
+                 }
             }
-          })
+        }
       }
     }
   })
@@ -224,7 +258,7 @@ const initMap = () => {
         
       d3.select(this).select('text')
         .style('font-weight', 'bold')
-        .attr('dy', 45)
+        // .attr('dy', 45) // Removed to keep centered
     }
   })
   .on('mouseleave', function(event, d) {
@@ -236,7 +270,7 @@ const initMap = () => {
         
       d3.select(this).select('text')
         .style('font-weight', 'normal')
-        .attr('dy', 40)
+        // .attr('dy', 40) // Removed to keep centered
     }
   })
 
