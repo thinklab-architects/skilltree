@@ -11,6 +11,7 @@ const filters = ref({ search: '', track: 'all' })
 const sidebarId = ref(null)
 const isSidebarOpen = ref(false)
 const dataSource = ref('Loading...')
+const viewMode = ref('map') // 'map' or 'list'
 
 const loadData = async () => {
   try {
@@ -59,10 +60,25 @@ onMounted(() => {
 
 <template>
   <div class="tree-app">
-    <TheHeader />
+    <TheHeader>
+      <template #actions>
+        <div class="view-toggle">
+          <button 
+            class="toggle-btn" 
+            :class="{ active: viewMode === 'map' }"
+            @click="viewMode = 'map'"
+          >Map View</button>
+          <button 
+            class="toggle-btn" 
+            :class="{ active: viewMode === 'list' }"
+            @click="viewMode = 'list'"
+          >List View</button>
+        </div>
+      </template>
+    </TheHeader>
     
-    <main id="mapView">
-      <section class="tree-stage">
+    <main id="main-view" :class="{ 'full-screen': viewMode === 'map' }">
+      <section v-if="viewMode === 'map'" class="tree-stage">
         <div class="tree-toolbar">
         </div>
         
@@ -72,6 +88,27 @@ onMounted(() => {
           :filtered-tutorials="filteredTutorials"
           @node-click="openSidebar"
         />
+      </section>
+
+      <section v-if="viewMode === 'list'" class="list-view">
+        <div class="container">
+          <h2>All Tutorials</h2>
+          <div class="tutorial-grid">
+            <div 
+              v-for="tutorial in filteredTutorials" 
+              :key="tutorial.id" 
+              class="tutorial-card"
+              @click="openSidebar(tutorial.id)"
+            >
+              <h3>{{ tutorial.title }}</h3>
+              <p class="meta">{{ tutorial.level }} · {{ tutorial.duration }}</p>
+              <p class="summary">{{ tutorial.summary }}</p>
+              <div class="tags">
+                <span v-for="tag in tutorial.tags" :key="tag" class="tag">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section class="filters">

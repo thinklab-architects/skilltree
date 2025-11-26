@@ -192,8 +192,15 @@ const onNodeClick = (node, e) => {
         :style="{ left: `${node.x}px`, top: `${node.y}px` }"
         @click="(e) => onNodeClick(node, e)"
       >
-        <strong>{{ node.title }}</strong>
-        <span>{{ node.isRoot ? node.subtitle : node.trackTitle }}</span>
+        <template v-if="node.isRoot">
+          <div class="root-circle">
+            <span>THINKLAB</span>
+          </div>
+        </template>
+        <template v-else>
+          <strong>{{ node.title }}</strong>
+          <span>{{ node.trackTitle }}</span>
+        </template>
       </div>
     </div>
   </div>

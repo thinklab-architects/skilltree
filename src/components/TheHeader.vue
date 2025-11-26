@@ -11,6 +11,7 @@
       </div>
     </div>
     <div class="header-actions">
+      <slot name="actions"></slot>
     </div>
   </header>
 </template>
