@@ -34,6 +34,7 @@ const trackColor = document.getElementById('trackColor');
 const trackMessage = document.getElementById('trackMessage');
 const ctaExplore = document.getElementById('ctaExplore');
 const ctaAdd = document.getElementById('ctaAdd');
+const trailMapSvg = document.getElementById('trailMapSvg');
 
 const staticMode = window.location.hostname.includes('github.io') || window.location.protocol === 'file:';
 const dataUrl = staticMode ? 'data/trails.json' : '/api/trails';
@@ -56,6 +57,13 @@ const statusClasses = {
   draft: 'status-draft'
 };
 
+const statusColors = {
+  ready: '#4ade80',
+  'in-review': '#fbbf24',
+  draft: '#a5b4fc',
+  default: '#8ea8c4'
+};
+
 async function loadData() {
   try {
     const res = await fetch(dataUrl);
@@ -68,6 +76,7 @@ async function loadData() {
     renderTracks();
     renderMetrics();
     fillAdminSelects();
+    renderMap();
   } catch (err) {
     console.error('Failed to load trails data', err);
     tracksEl.innerHTML = '<p class="hint">Unable to load data. If you are on GitHub Pages, ensure data/trails.json is present.</p>';
@@ -147,6 +156,80 @@ function renderTracks() {
       </ul>
     `;
     tracksEl.appendChild(card);
+  });
+}
+
+function renderMap() {
+  if (!trailMapSvg) return;
+  const tracks = state.data.tracks;
+  const tutorials = state.data.tutorials;
+  if (!tracks.length) {
+    trailMapSvg.innerHTML = '<text x="10" y="20" class="map-node-label">No map data.</text>';
+    return;
+  }
+
+  const ns = 'http://www.w3.org/2000/svg';
+  const width = Math.max(trailMapSvg.clientWidth, 640);
+  const modulesPerTrack = tracks.map(track => tutorials.filter(t => t.trackId === track.id).length);
+  const maxItems = Math.max(...modulesPerTrack, 1);
+  const height = Math.max(260, maxItems * 90);
+  trailMapSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  trailMapSvg.style.height = `${Math.min(420, height)}px`;
+  trailMapSvg.innerHTML = '';
+
+  const spacingX = width / (tracks.length + 1);
+
+  tracks.forEach((track, index) => {
+    const trackModules = tutorials
+      .filter(module => module.trackId === track.id)
+      .sort((a, b) => statusScore(a.status) - statusScore(b.status));
+
+    const columnX = spacingX * (index + 1);
+    const label = document.createElementNS(ns, 'text');
+    label.textContent = track.title;
+    label.setAttribute('x', columnX);
+    label.setAttribute('y', 24);
+    label.setAttribute('text-anchor', 'middle');
+    label.classList.add('map-track-label');
+    trailMapSvg.appendChild(label);
+
+    if (trackModules.length > 1) {
+      const points = trackModules.map((_, idx) => {
+        const cy = height * ((idx + 1) / (trackModules.length + 1));
+        return `${columnX},${cy}`;
+      });
+      const path = document.createElementNS(ns, 'polyline');
+      path.setAttribute('points', points.join(' '));
+      path.setAttribute('stroke', track.color || '#fff');
+      path.setAttribute('class', 'map-connector');
+      trailMapSvg.appendChild(path);
+    }
+
+    const count = Math.max(trackModules.length, 1);
+    const gap = height / (count + 1);
+    trackModules.forEach((module, modIndex) => {
+      const cy = gap * (modIndex + 1);
+      const circle = document.createElementNS(ns, 'circle');
+      circle.setAttribute('cx', columnX);
+      circle.setAttribute('cy', cy);
+      circle.setAttribute('r', 10);
+      circle.setAttribute('fill', statusColors[module.status] || statusColors.default);
+      circle.setAttribute('stroke', track.color || 'rgba(255,255,255,0.5)');
+      circle.setAttribute('stroke-width', '2');
+      circle.classList.add('map-node');
+      const title = document.createElementNS(ns, 'title');
+      title.textContent = `${module.title} • ${statusLabels[module.status] || module.status}`;
+      circle.appendChild(title);
+      trailMapSvg.appendChild(circle);
+
+      const text = document.createElementNS(ns, 'text');
+      text.textContent = module.title;
+      text.setAttribute('x', columnX + 16);
+      text.setAttribute('y', cy + 4);
+      text.setAttribute('text-anchor', 'start');
+      text.classList.add('map-node-label');
+      trailMapSvg.appendChild(text);
+    });
   });
 }
 
@@ -464,5 +547,7 @@ function lockAdminUI() {
     }
   });
 }
+
+window.addEventListener('resize', () => renderMap());
 
 init();

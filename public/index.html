@@ -75,6 +75,26 @@
       </div>
     </section>
 
+    <section class="map-section" id="mapSection">
+      <div class="map-header">
+        <div>
+          <p class="eyebrow">Map view</p>
+          <h2>See the trails as a map</h2>
+          <p class="lede">
+            Each column represents a track and every node is a module. The lines guide you through the flow of materials so you can trace dependencies at a glance.
+          </p>
+        </div>
+        <div class="map-legend">
+          <div class="legend-item"><span class="legend-dot status-ready"></span>Ready</div>
+          <div class="legend-item"><span class="legend-dot status-in-review"></span>In review</div>
+          <div class="legend-item"><span class="legend-dot status-draft"></span>Draft</div>
+        </div>
+      </div>
+      <div class="map-wrapper">
+        <svg id="trailMapSvg" viewBox="0 0 960 320" role="img" aria-label="Skill trail map"></svg>
+      </div>
+    </section>
+
     <section id="tracks" class="track-grid"></section>
 
     <section class="admin" id="adminPanel">
