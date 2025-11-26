@@ -2,6 +2,11 @@ $ErrorActionPreference = "Stop"
 # Commit changes
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $message = "Auto deploy: $timestamp"
+
+# Add all changes
+Write-Host "Adding files..." -ForegroundColor Green
+git add .
+
 Write-Host "Committing with message: '$message'..." -ForegroundColor Green
 git commit -m "$message"
 
