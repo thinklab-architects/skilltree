@@ -30,6 +30,9 @@ const getShardPath = (id) => {
 const initMap = () => {
   if (!container.value || !props.tracks.length) return
 
+  console.log('Map Init - Tracks:', props.tracks)
+  console.log('Map Init - Tutorials:', props.tutorials)
+
   const width = container.value.clientWidth
   const height = container.value.clientHeight
 
@@ -56,6 +59,8 @@ const initMap = () => {
 
     // 3. Tutorial Nodes (Chained)
     const trackTutorials = props.tutorials.filter(t => t.trackId === track.id)
+    console.log(`Track ${track.title} (${track.id}) has ${trackTutorials.length} tutorials`)
+    
     let prevNodeId = trackNode.id
 
     trackTutorials.forEach((tut, j) => {
