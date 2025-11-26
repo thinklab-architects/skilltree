@@ -120,6 +120,7 @@ const initMap = () => {
     .selectAll('path')
     .data(links)
     .join('path')
+    .attr('class', d => `link track-${d.color ? d.color.replace('#', '') : 'default'}`)
     .attr('stroke', d => d.color || '#ccc')
     .attr('stroke-width', 2)
     .attr('stroke-dasharray', '6,4')
@@ -251,6 +252,7 @@ const initMap = () => {
   // Hover effects
   node.on('mouseenter', function(event, d) {
     if (d.type === 'tutorial') {
+      // Highlight the node
       d3.select(this).select('path')
         .attr('fill', 'rgba(0, 0, 0, 0.7)') // Dark semi-transparent background
         .attr('transform', 'scale(2.2)')
@@ -259,10 +261,18 @@ const initMap = () => {
       d3.select(this).select('text')
         .attr('fill', 'white') // Text turns white
         .style('font-weight', 'bold')
+      
+      // Highlight all links in the same track
+      const trackClass = `track-${d.color.replace('#', '')}`
+      g.selectAll(`.${trackClass}`)
+        .attr('stroke-width', 5)
+        .attr('opacity', 1)
+        .style('filter', `drop-shadow(0 0 8px ${d.color})`)
     }
   })
   .on('mouseleave', function(event, d) {
     if (d.type === 'tutorial') {
+      // Reset the node
       d3.select(this).select('path')
         .attr('fill', '#fff')
         .attr('transform', 'scale(1.8)')
@@ -271,6 +281,13 @@ const initMap = () => {
       d3.select(this).select('text')
         .attr('fill', '#444') // Revert to dark gray
         .style('font-weight', 'normal')
+      
+      // Reset all links in the same track
+      const trackClass = `track-${d.color.replace('#', '')}`
+      g.selectAll(`.${trackClass}`)
+        .attr('stroke-width', 2)
+        .attr('opacity', 0.5)
+        .style('filter', 'none')
     }
   })
 
