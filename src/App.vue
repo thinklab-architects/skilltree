@@ -97,16 +97,6 @@ onMounted(() => {
         <div class="header-search" v-if="viewMode === 'map'">
           <input type="search" v-model="filters.search" placeholder="Search...">
         </div>
-        <button 
-          v-if="viewMode === 'map'" 
-          class="pill ghost filter-toggle-btn"
-          @click="isFilterPanelOpen = !isFilterPanelOpen"
-        >
-          <span>🔍 Filters</span>
-          <span v-if="filters.selectedLevels.length + filters.selectedTags.length > 0" class="filter-badge">
-            {{ filters.selectedLevels.length + filters.selectedTags.length }}
-          </span>
-        </button>
         <div class="view-toggle">
           <button 
             class="toggle-btn" 
@@ -121,51 +111,6 @@ onMounted(() => {
         </div>
       </template>
     </TheHeader>
-    
-    <!-- Filter Panel -->
-    <div v-if="isFilterPanelOpen && viewMode === 'map'" class="filter-panel-overlay" @click="isFilterPanelOpen = false">
-      <div class="filter-panel" @click.stop>
-        <div class="filter-panel-header">
-          <h3>Filters</h3>
-          <button class="close-btn" @click="isFilterPanelOpen = false">✕</button>
-        </div>
-        
-        <div class="filter-section">
-          <h4>Level</h4>
-          <div class="filter-options">
-            <label v-for="level in availableLevels" :key="level" class="filter-checkbox">
-              <input 
-                type="checkbox" 
-                :value="level" 
-                v-model="filters.selectedLevels"
-              >
-              <span>{{ level }}</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="filter-section">
-          <h4>Tags</h4>
-          <div class="filter-options">
-            <label v-for="tag in availableTags" :key="tag" class="filter-checkbox">
-              <input 
-                type="checkbox" 
-                :value="tag" 
-                v-model="filters.selectedTags"
-              >
-              <span>{{ tag }}</span>
-            </label>
-          </div>
-        </div>
-        
-        <div class="filter-panel-footer">
-          <button 
-            class="pill ghost" 
-            @click="filters.selectedLevels = []; filters.selectedTags = []"
-          >Clear All</button>
-        </div>
-      </div>
-    </div>
     
     <main id="main-view" :class="{ 'full-screen': viewMode === 'map' }">
       <section v-if="viewMode === 'map'" class="tree-stage">
