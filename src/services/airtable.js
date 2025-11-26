@@ -116,7 +116,22 @@ export const fetchAirtableData = async () => {
             })
         })
 
-        return { tracks, tutorials }
+        // Deduplicate tutorials by Title to prevent multiple nodes for the same content
+        const uniqueTutorials = []
+        const seenTitles = new Set()
+
+        tutorials.forEach(t => {
+            const normalizedTitle = (t.title || '').trim().toLowerCase()
+            if (normalizedTitle && !seenTitles.has(normalizedTitle)) {
+                seenTitles.add(normalizedTitle)
+                uniqueTutorials.push(t)
+            } else if (!normalizedTitle) {
+                // Keep untitled ones? Maybe, using ID as uniqueness
+                uniqueTutorials.push(t)
+            }
+        })
+
+        return { tracks, tutorials: uniqueTutorials }
 
     } catch (error) {
         console.error('Error fetching from Airtable:', error)
