@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architect Skill Trails</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="ambient ambient-a"></div>
+  <div class="ambient ambient-b"></div>
+  <header class="hero">
+    <div class="nav">
+      <div class="brand">
+        <div class="dot"></div>
+        <span>Architect Skill Trails</span>
+      </div>
+      <div class="nav-actions">
+        <a class="ghost" href="#tracks">Explore</a>
+        <button id="adminToggle" class="pill ghost">Admin / Edit</button>
+      </div>
+    </div>
+    <div class="hero-grid">
+      <div class="hero-text">
+        <p class="eyebrow">Architecture Ops / Tutorial Trails</p>
+        <h1>Build a repeatable training path for the studio.</h1>
+        <p class="lede">
+          Curated modules, ready-to-run assets, and a backstage editor so practice leads can publish updates without touching code.
+        </p>
+        <div class="hero-actions">
+          <button class="pill" id="ctaExplore">View the trails</button>
+          <button class="pill outline" id="ctaAdd">Log in to edit</button>
+        </div>
+        <div class="hero-metrics" id="heroMetrics"></div>
+      </div>
+      <div class="hero-card">
+        <div class="card-head">
+          <div>
+            <p class="eyebrow">Workboard</p>
+            <h3>Studio Enablement</h3>
+          </div>
+          <div class="status-dot status-ready">Ready</div>
+        </div>
+        <ul class="mini-list" id="miniList"></ul>
+        <div class="hero-foot">
+          <p class="hint">Traffic lights show what is ready, in review, or still cooking.</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="filters">
+      <div class="filter-row">
+        <div class="filter-group">
+          <label class="hint">搜尋 / Search</label>
+          <input type="search" id="searchInput" placeholder="Search tutorials, tags, or owners">
+        </div>
+        <div class="filter-group">
+          <label class="hint">狀態 / Status</label>
+          <div class="chip-row" id="statusFilters">
+            <button class="chip active" data-status="all">All</button>
+            <button class="chip" data-status="ready">Ready</button>
+            <button class="chip" data-status="in-review">In review</button>
+            <button class="chip" data-status="draft">Draft</button>
+          </div>
+        </div>
+        <div class="filter-group">
+          <label class="hint">Tracks</label>
+          <div class="chip-row" id="trackFilters"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="tracks" class="track-grid"></section>
+
+    <section class="admin" id="adminPanel">
+      <div class="admin-head">
+        <div>
+          <p class="eyebrow">Backstage</p>
+          <h2>Editor for practice leads</h2>
+          <p class="lede">Use your admin token to publish updates, add tracks, or archive modules.</p>
+        </div>
+        <div class="token-box">
+          <label for="tokenInput" class="hint">Admin token (x-admin-token)</label>
+          <form id="adminLogin">
+            <input id="tokenInput" type="password" placeholder="Enter ADMIN_TOKEN">
+            <button class="pill" type="submit">Save token</button>
+          </form>
+          <p class="hint">Token is kept in this browser session only.</p>
+          <p class="hint" id="tokenStatus"></p>
+        </div>
+      </div>
+
+      <div class="admin-grid">
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Tutorials</p>
+              <h3>Create or update a module</h3>
+            </div>
+            <button class="pill ghost" id="resetModule">New module</button>
+          </div>
+          <form id="moduleForm" class="stack">
+            <label>Pick an existing module</label>
+            <select id="moduleSelect"></select>
+            <label>Title</label>
+            <input id="moduleTitle" required>
+            <label>Track</label>
+            <select id="moduleTrack" required></select>
+            <label>Summary</label>
+            <textarea id="moduleSummary" rows="3"></textarea>
+            <div class="grid-2">
+              <div>
+                <label>Status</label>
+                <select id="moduleStatus">
+                  <option value="ready">Ready</option>
+                  <option value="in-review">In review</option>
+                  <option value="draft">Draft</option>
+                </select>
+              </div>
+              <div>
+                <label>Level</label>
+                <input id="moduleLevel" placeholder="Core / Foundation / Advanced">
+              </div>
+            </div>
+            <div class="grid-2">
+              <div>
+                <label>Duration</label>
+                <input id="moduleDuration" placeholder="30m / self-paced">
+              </div>
+              <div>
+                <label>Owner</label>
+                <input id="moduleOwner" placeholder="Design Ops, Digital Practice...">
+              </div>
+            </div>
+            <label>Tags (comma separated)</label>
+            <input id="moduleTags" placeholder="BIM, QA, workshop">
+            <label>Highlight</label>
+            <textarea id="moduleHighlight" rows="2"></textarea>
+            <div class="link-list">
+              <div class="link-head">
+                <span>Resources</span>
+                <button class="pill ghost" type="button" id="addLink">Add link</button>
+              </div>
+              <div id="linkFields"></div>
+            </div>
+            <div class="panel-actions">
+              <button class="pill" type="submit">Save module</button>
+              <button class="pill danger" type="button" id="deleteModule">Delete</button>
+            </div>
+            <p class="hint" id="moduleMessage"></p>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <div>
+              <p class="eyebrow">Tracks</p>
+              <h3>Add or adjust tracks</h3>
+            </div>
+          </div>
+          <form id="trackForm" class="stack">
+            <label>Title</label>
+            <input id="trackTitle" required placeholder="Digital Practice">
+            <label>Description</label>
+            <textarea id="trackDescription" rows="3"></textarea>
+            <div class="grid-2">
+              <div>
+                <label>Focus</label>
+                <input id="trackFocus" placeholder="DD -> CD">
+              </div>
+              <div>
+                <label>Lead</label>
+                <input id="trackLead" placeholder="Technical Design">
+              </div>
+            </div>
+            <label>Accent color</label>
+            <input id="trackColor" type="color" value="#4bffaa">
+            <div class="panel-actions">
+              <button class="pill" type="submit">Add track</button>
+            </div>
+            <p class="hint" id="trackMessage"></p>
+          </form>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div>
+      <p class="eyebrow">Deploy</p>
+      <p>Host `public` on GitHub Pages. Keep `server.js` running on a small Node host (Railway, Render, Fly). Set ADMIN_TOKEN as an environment variable.</p>
+    </div>
+    <div>
+      <p class="eyebrow">Usage</p>
+      <p>Practice leads edit via the admin token; the rest of the team views the live trail.</p>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
