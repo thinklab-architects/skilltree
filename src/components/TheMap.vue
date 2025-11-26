@@ -14,16 +14,15 @@ const container = ref(null)
 const svgRef = ref(null)
 let simulation = null
 
-// Shard shapes (random polygons)
+// Irregular Pentagon shapes
 const shards = [
-  'M0,-20 L18,-12 L20,10 L0,20 L-18,12 L-20,-10 Z',
-  'M0,-22 L15,-15 L22,0 L15,15 L0,22 L-15,15 L-22,0 L-15,-15 Z',
-  'M-10,-20 L15,-18 L20,5 L10,20 L-15,18 L-20,-5 Z',
-  'M0,-25 L12,-10 L25,0 L12,10 L0,25 L-12,10 L-25,0 L-12,-10 Z'
+  'M0,-22 L20,-8 L14,20 L-14,20 L-20,-8 Z',
+  'M0,-24 L22,-6 L12,22 L-12,22 L-22,-6 Z',
+  'M5,-22 L22,-5 L10,24 L-15,20 L-18,-10 Z',
+  'M-5,-22 L18,-10 L15,20 L-10,24 L-22,-5 Z'
 ]
 
 const getShardPath = (id) => {
-  // Deterministic shape based on ID
   const index = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % shards.length
   return shards[index]
 }
@@ -49,7 +48,7 @@ const initMap = () => {
       type: 'track', 
       title: track.title, 
       color: track.color, 
-      r: 25,
+      r: 30,
       trackId: track.id
     }
     nodes.push(trackNode)
@@ -67,7 +66,7 @@ const initMap = () => {
         title: tut.title,
         trackId: track.id,
         color: track.color,
-        r: 15,
+        r: 20,
         visible: isVisible,
         data: tut
       }
@@ -105,9 +104,9 @@ const initMap = () => {
 
   // Simulation
   simulation = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 150 : 60))
-    .force('charge', d3.forceManyBody().strength(-300))
-    .force('collide', d3.forceCollide().radius(d => d.r + 10))
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 180 : 80))
+    .force('charge', d3.forceManyBody().strength(-400))
+    .force('collide', d3.forceCollide().radius(d => d.r + 15))
     .force('x', d3.forceX())
     .force('y', d3.forceY())
 
@@ -120,7 +119,7 @@ const initMap = () => {
     .attr('stroke-width', 2)
     .attr('stroke-dasharray', '6,4')
     .attr('fill', 'none')
-    .attr('opacity', 0.6)
+    .attr('opacity', 0.5)
 
   // Render Nodes
   const node = g.append('g')
@@ -148,7 +147,7 @@ const initMap = () => {
       el.append('circle')
         .attr('r', 40)
         .attr('fill', '#ff7a18')
-        .style('filter', 'drop-shadow(0 0 10px rgba(255, 122, 24, 0.5))')
+        .style('filter', 'drop-shadow(0 0 15px rgba(255, 122, 24, 0.6))')
       
       el.append('text')
         .text('THINKLAB')
@@ -161,45 +160,48 @@ const initMap = () => {
     } else if (d.type === 'track') {
       el.append('path')
         .attr('d', getShardPath(d.id))
-        .attr('transform', 'scale(2.5)')
-        .attr('fill', 'white')
+        .attr('transform', 'scale(3)')
+        .attr('fill', '#fff')
         .attr('stroke', d.color)
         .attr('stroke-width', 2)
+        .style('filter', `drop-shadow(0 0 8px ${d.color})`) // Glow effect
       
       el.append('text')
         .text(d.title)
         .attr('text-anchor', 'middle')
-        .attr('dy', 45) // Below the shape
+        .attr('dy', 55)
         .attr('fill', d.color)
         .style('font-weight', 'bold')
         .style('font-size', '14px')
         .style('text-transform', 'uppercase')
+        .style('text-shadow', '0 0 10px rgba(255,255,255,0.8)')
 
     } else {
       // Tutorial Node
       el.append('path')
         .attr('d', getShardPath(d.id))
-        .attr('transform', 'scale(1.5)')
-        .attr('fill', 'white')
+        .attr('transform', 'scale(1.8)')
+        .attr('fill', '#fff')
         .attr('stroke', d.color)
-        .attr('stroke-width', 1.5)
+        .attr('stroke-width', 2)
         .attr('class', 'shard-shape')
         .style('opacity', d.visible ? 1 : 0.3)
-        .style('transition', 'transform 0.2s')
+        .style('filter', d.visible ? `drop-shadow(0 0 5px ${d.color})` : 'none') // Glow effect
+        .style('transition', 'all 0.3s ease')
 
       if (d.visible) {
         el.append('text')
           .text(d.title)
           .attr('text-anchor', 'middle')
-          .attr('dy', 35)
+          .attr('dy', 40)
           .attr('fill', '#444')
-          .style('font-size', '10px')
+          .style('font-size', '11px')
           .style('pointer-events', 'none')
+          .style('text-shadow', '0 0 4px white')
           .each(function(d) {
-            // Simple wrap or truncation could go here
             const self = d3.select(this)
-            if (self.text().length > 15) {
-              self.text(self.text().slice(0, 15) + '...')
+            if (self.text().length > 18) {
+              self.text(self.text().slice(0, 18) + '...')
             }
           })
       }
@@ -211,18 +213,24 @@ const initMap = () => {
     if (d.type === 'tutorial') {
       d3.select(this).select('path')
         .attr('fill', d.color)
-        .attr('transform', 'scale(1.8)')
+        .attr('transform', 'scale(2.2)')
+        .style('filter', `drop-shadow(0 0 15px ${d.color})`)
+        
       d3.select(this).select('text')
         .style('font-weight', 'bold')
+        .attr('dy', 45)
     }
   })
   .on('mouseleave', function(event, d) {
     if (d.type === 'tutorial') {
       d3.select(this).select('path')
-        .attr('fill', 'white')
-        .attr('transform', 'scale(1.5)')
+        .attr('fill', '#fff')
+        .attr('transform', 'scale(1.8)')
+        .style('filter', `drop-shadow(0 0 5px ${d.color})`)
+        
       d3.select(this).select('text')
         .style('font-weight', 'normal')
+        .attr('dy', 40)
     }
   })
 
