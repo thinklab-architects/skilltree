@@ -77,6 +77,7 @@ export const fetchAirtableData = async () => {
                 tags: record.get('Tags') || [],
                 owner: record.get('Owner'),
                 highlight: record.get('Highlight'),
+                coverImage: record.get('CoverImage') ? record.get('CoverImage')[0]?.url : null,
                 links: [] // Will populate
             }
         })
