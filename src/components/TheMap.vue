@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted, watch, computed } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
+import * as d3 from 'd3'
 
-const props = defineProps({
+const props = define defineProps({
   tracks: Array,
   tutorials: Array,
   filteredTutorials: Array
@@ -9,255 +10,276 @@ const props = defineProps({
 
 const emit = defineEmits(['node-click'])
 
-const viewport = ref(null)
-const width = 2000
-const height = 2000
-const center = { x: width / 2, y: height / 2 }
+const container = ref(null)
+const svgRef = ref(null)
+let simulation = null
 
-const panState = ref({ x: 0, y: 0, scale: 1, isDragging: false, startX: 0, startY: 0 })
+// Shard shapes (random polygons)
+const shards = [
+  'M0,-20 L18,-12 L20,10 L0,20 L-18,12 L-20,-10 Z',
+  'M0,-22 L15,-15 L22,0 L15,15 L0,22 L-15,15 L-22,0 L-15,-15 Z',
+  'M-10,-20 L15,-18 L20,5 L10,20 L-15,18 L-20,-5 Z',
+  'M0,-25 L12,-10 L25,0 L12,10 L0,25 L-12,10 L-25,0 L-12,-10 Z'
+]
 
-// Calculate node positions
-const nodes = computed(() => {
-  const result = []
-  // Root node
-  result.push({ 
-    id: 'root', 
-    title: 'THINKLAB SKILLTREE', 
-    subtitle: 'Start here', 
-    x: center.x, 
-    y: center.y, 
-    type: 'root',
-    visible: true
-  })
+const getShardPath = (id) => {
+  // Deterministic shape based on ID
+  const index = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % shards.length
+  return shards[index]
+}
 
-  const angleStep = (Math.PI * 2) / Math.max(props.tracks.length, 1)
-  const trackRadius = 250 // Distance of Track nodes from center
-  const tutorialStartRadius = 400 // Distance of first tutorial from center
-  const tutorialStep = 180 // Distance between tutorials
+const initMap = () => {
+  if (!container.value || !props.tracks.length) return
 
-  props.tracks.forEach((track, idx) => {
-    const angle = angleStep * idx - Math.PI / 2
-    
-    // Track Node
-    const trackX = center.x + Math.cos(angle) * trackRadius
-    const trackY = center.y + Math.sin(angle) * trackRadius
-    
-    result.push({
-      id: `track-${track.id}`,
-      title: track.title,
-      x: trackX,
-      y: trackY,
-      type: 'track',
-      color: track.color,
-      visible: true,
-      isRoot: false // It's not THE root, but it's a hub
-    })
+  const width = container.value.clientWidth
+  const height = container.value.clientHeight
 
-    // Tutorial Nodes
-    const modules = props.tutorials.filter(t => t.trackId === track.id)
-    modules.forEach((module, modIdx) => {
-      const radius = tutorialStartRadius + tutorialStep * modIdx
-      const x = center.x + Math.cos(angle) * radius
-      const y = center.y + Math.sin(angle) * radius
-      
-      const isVisible = props.filteredTutorials.some(t => t.id === module.id)
-      
-      result.push({
-        ...module,
-        x,
-        y,
+  // Prepare Data
+  const nodes = []
+  const links = []
+
+  // 1. Root Node
+  const rootNode = { id: 'root', type: 'root', title: 'THINKLAB', r: 40, fx: 0, fy: 0 }
+  nodes.push(rootNode)
+
+  // 2. Track Nodes
+  props.tracks.forEach((track, i) => {
+    const trackNode = { 
+      id: `track-${track.id}`, 
+      type: 'track', 
+      title: track.title, 
+      color: track.color, 
+      r: 25,
+      trackId: track.id
+    }
+    nodes.push(trackNode)
+    links.push({ source: 'root', target: trackNode.id, type: 'root-track', color: track.color })
+
+    // 3. Tutorial Nodes (Chained)
+    const trackTutorials = props.tutorials.filter(t => t.trackId === track.id)
+    let prevNodeId = trackNode.id
+
+    trackTutorials.forEach((tut, j) => {
+      const isVisible = props.filteredTutorials.some(t => t.id === tut.id)
+      const tutNode = {
+        id: tut.id,
         type: 'tutorial',
-        visible: isVisible
-      })
-    })
-  })
-  return result
-})
-
-const connectors = computed(() => {
-  const result = []
-  const angleStep = (Math.PI * 2) / Math.max(props.tracks.length, 1)
-  const trackRadius = 250
-  const tutorialStartRadius = 400
-  const tutorialStep = 180
-
-  props.tracks.forEach((track, idx) => {
-    const angle = angleStep * idx - Math.PI / 2
-    
-    // 1. Root to Track
-    const trackX = center.x + Math.cos(angle) * trackRadius
-    const trackY = center.y + Math.sin(angle) * trackRadius
-    
-    result.push({
-      x1: center.x,
-      y1: center.y,
-      x2: trackX,
-      y2: trackY,
-      color: track.color || '#ccc',
-      type: 'root-track'
-    })
-
-    // 2. Track to Tutorials
-    const modules = props.tutorials.filter(t => t.trackId === track.id)
-    if (!modules.length) return
-
-    modules.forEach((module, modIdx) => {
-      const radius = tutorialStartRadius + tutorialStep * modIdx
-      const x = center.x + Math.cos(angle) * radius
-      const y = center.y + Math.sin(angle) * radius
-      
-      let prevX, prevY
-      if (modIdx === 0) {
-        // Connect to Track Node
-        prevX = trackX
-        prevY = trackY
-      } else {
-        // Connect to previous tutorial
-        const prevRadius = tutorialStartRadius + tutorialStep * (modIdx - 1)
-        prevX = center.x + Math.cos(angle) * prevRadius
-        prevY = center.y + Math.sin(angle) * prevRadius
+        title: tut.title,
+        trackId: track.id,
+        color: track.color,
+        r: 15,
+        visible: isVisible,
+        data: tut
       }
+      nodes.push(tutNode)
       
-      result.push({
-        x1: prevX,
-        y1: prevY,
-        x2: x,
-        y2: y,
-        color: track.color || '#ffb347',
-        type: 'tutorial-link'
+      // Link to previous node (Track or previous Tutorial)
+      links.push({ 
+        source: prevNodeId, 
+        target: tutNode.id, 
+        type: 'tutorial-link', 
+        color: track.color 
       })
+      
+      prevNodeId = tutNode.id
     })
   })
-  return result
-})
 
-const transformStyle = computed(() => {
-  return {
-    transform: `translate(${panState.value.x}px, ${panState.value.y}px) scale(${panState.value.scale})`
+  // Clear existing SVG
+  d3.select(svgRef.value).selectAll('*').remove()
+
+  const svg = d3.select(svgRef.value)
+    .attr('viewBox', [-width / 2, -height / 2, width, height])
+    .style('cursor', 'grab')
+
+  // Zoom Behavior
+  const g = svg.append('g')
+  
+  const zoom = d3.zoom()
+    .scaleExtent([0.1, 4])
+    .on('zoom', (event) => {
+      g.attr('transform', event.transform)
+    })
+
+  svg.call(zoom)
+
+  // Simulation
+  simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 150 : 60))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('collide', d3.forceCollide().radius(d => d.r + 10))
+    .force('x', d3.forceX())
+    .force('y', d3.forceY())
+
+  // Render Links
+  const link = g.append('g')
+    .selectAll('path')
+    .data(links)
+    .join('path')
+    .attr('stroke', d => d.color || '#ccc')
+    .attr('stroke-width', 2)
+    .attr('stroke-dasharray', '6,4')
+    .attr('fill', 'none')
+    .attr('opacity', 0.6)
+
+  // Render Nodes
+  const node = g.append('g')
+    .selectAll('g')
+    .data(nodes)
+    .join('g')
+    .attr('class', 'node-group')
+    .style('cursor', 'pointer')
+    .on('click', (event, d) => {
+      event.stopPropagation()
+      if (d.type === 'tutorial' && d.visible) {
+        emit('node-click', d.id)
+      }
+    })
+    .call(d3.drag()
+      .on('start', dragstarted)
+      .on('drag', dragged)
+      .on('end', dragended))
+
+  // Node Shapes
+  node.each(function(d) {
+    const el = d3.select(this)
+    
+    if (d.type === 'root') {
+      el.append('circle')
+        .attr('r', 40)
+        .attr('fill', '#ff7a18')
+        .style('filter', 'drop-shadow(0 0 10px rgba(255, 122, 24, 0.5))')
+      
+      el.append('text')
+        .text('THINKLAB')
+        .attr('text-anchor', 'middle')
+        .attr('dy', 4)
+        .attr('fill', 'white')
+        .style('font-weight', 'bold')
+        .style('font-size', '12px')
+        
+    } else if (d.type === 'track') {
+      el.append('path')
+        .attr('d', getShardPath(d.id))
+        .attr('transform', 'scale(2.5)')
+        .attr('fill', 'white')
+        .attr('stroke', d.color)
+        .attr('stroke-width', 2)
+      
+      el.append('text')
+        .text(d.title)
+        .attr('text-anchor', 'middle')
+        .attr('dy', 45) // Below the shape
+        .attr('fill', d.color)
+        .style('font-weight', 'bold')
+        .style('font-size', '14px')
+        .style('text-transform', 'uppercase')
+
+    } else {
+      // Tutorial Node
+      el.append('path')
+        .attr('d', getShardPath(d.id))
+        .attr('transform', 'scale(1.5)')
+        .attr('fill', 'white')
+        .attr('stroke', d.color)
+        .attr('stroke-width', 1.5)
+        .attr('class', 'shard-shape')
+        .style('opacity', d.visible ? 1 : 0.3)
+        .style('transition', 'transform 0.2s')
+
+      if (d.visible) {
+        el.append('text')
+          .text(d.title)
+          .attr('text-anchor', 'middle')
+          .attr('dy', 35)
+          .attr('fill', '#444')
+          .style('font-size', '10px')
+          .style('pointer-events', 'none')
+          .each(function(d) {
+            // Simple wrap or truncation could go here
+            const self = d3.select(this)
+            if (self.text().length > 15) {
+              self.text(self.text().slice(0, 15) + '...')
+            }
+          })
+      }
+    }
+  })
+
+  // Hover effects
+  node.on('mouseenter', function(event, d) {
+    if (d.type === 'tutorial') {
+      d3.select(this).select('path')
+        .attr('fill', d.color)
+        .attr('transform', 'scale(1.8)')
+      d3.select(this).select('text')
+        .style('font-weight', 'bold')
+    }
+  })
+  .on('mouseleave', function(event, d) {
+    if (d.type === 'tutorial') {
+      d3.select(this).select('path')
+        .attr('fill', 'white')
+        .attr('transform', 'scale(1.5)')
+      d3.select(this).select('text')
+        .style('font-weight', 'normal')
+    }
+  })
+
+  simulation.on('tick', () => {
+    link.attr('d', d => `M${d.source.x},${d.source.y} L${d.target.x},${d.target.y}`)
+    node.attr('transform', d => `translate(${d.x},${d.y})`)
+  })
+
+  function dragstarted(event) {
+    if (!event.active) simulation.alphaTarget(0.3).restart()
+    event.subject.fx = event.subject.x
+    event.subject.fy = event.subject.y
+    svg.style('cursor', 'grabbing')
   }
-})
 
-const lineStyle = computed(() => {
-  return {
-    ...transformStyle.value,
-    strokeWidth: `${2 / panState.value.scale}px`
+  function dragged(event) {
+    event.subject.fx = event.x
+    event.subject.fy = event.y
   }
-})
 
-const handleWheel = (e) => {
-  e.preventDefault()
-  const zoomSpeed = 0.001
-  const newScale = Math.min(Math.max(0.2, panState.value.scale - e.deltaY * zoomSpeed), 3)
-  
-  const rect = viewport.value.getBoundingClientRect()
-  // Zoom towards center of viewport, not mouse position
-  const mouseX = rect.width / 2
-  const mouseY = rect.height / 2
-  
-  const scaleRatio = newScale / panState.value.scale
-  
-  panState.value.x = mouseX - (mouseX - panState.value.x) * scaleRatio
-  panState.value.y = mouseY - (mouseY - panState.value.y) * scaleRatio
-  panState.value.scale = newScale
-}
-
-const startPan = (e) => {
-  if (e.target.closest('.tree-node')) return
-  panState.value.isDragging = true
-  panState.value.startX = e.clientX - panState.value.x
-  panState.value.startY = e.clientY - panState.value.y
-  viewport.value.setPointerCapture(e.pointerId)
-}
-
-const doPan = (e) => {
-  if (!panState.value.isDragging) return
-  panState.value.x = e.clientX - panState.value.startX
-  panState.value.y = e.clientY - panState.value.startY
-}
-
-const endPan = (e) => {
-  panState.value.isDragging = false
-  try { viewport.value.releasePointerCapture(e.pointerId) } catch {}
-}
-
-const centerMap = () => {
-  if (viewport.value) {
-    const viewportW = viewport.value.clientWidth
-    const viewportH = viewport.value.clientHeight
-    panState.value.x = (viewportW - width) / 2
-    panState.value.y = (viewportH - height) / 2
+  function dragended(event) {
+    if (!event.active) simulation.alphaTarget(0)
+    event.subject.fx = null
+    event.subject.fy = null
+    svg.style('cursor', 'grab')
   }
 }
 
 onMounted(() => {
-  centerMap()
+  // Wait for data to be ready
+  const checkData = setInterval(() => {
+    if (props.tracks.length > 0) {
+      clearInterval(checkData)
+      initMap()
+    }
+  }, 100)
 })
 
-const onNodeClick = (node, e) => {
-  e.stopPropagation()
-  if (!node.isRoot && node.visible) {
-    emit('node-click', node.id)
-  }
-}
+watch(() => props.filteredTutorials, () => {
+  // Ideally update visibility without full re-render, 
+  // but for now re-init is safer to ensure consistency
+  initMap()
+}, { deep: true })
+
 </script>
 
 <template>
-  <div 
-    class="tree-viewport" 
-    ref="viewport"
-    @wheel="handleWheel"
-    @pointerdown="startPan"
-    @pointermove="doPan"
-    @pointerup="endPan"
-    @pointerleave="endPan"
-    :style="{ cursor: panState.isDragging ? 'grabbing' : 'grab' }"
-  >
-    <svg id="treeLines" :width="width" :height="height" :viewBox="`0 0 ${width} ${height}`" :style="lineStyle">
-      <path 
-        v-for="(conn, idx) in connectors" 
-        :key="idx"
-        :d="`M ${conn.x1} ${conn.y1} L ${conn.x2} ${conn.y2}`"
-        fill="none"
-        :stroke="conn.color"
-        stroke-width="2"
-        stroke-dasharray="6,6"
-        stroke-linecap="round"
-        opacity="0.6"
-      />
-    </svg>
-    
-    <div id="treeNodes" :style="{ width: `${width}px`, height: `${height}px`, ...transformStyle }">
-      <div 
-        v-for="node in nodes" 
-        :key="node.id"
-        class="tree-node"
-        :class="{ 
-          'root-node': node.type === 'root', 
-          'track-node': node.type === 'track',
-          'dimmed': !node.visible 
-        }"
-        :style="{ 
-          left: `${node.x}px`, 
-          top: `${node.y}px`,
-          borderColor: node.type === 'track' ? node.color : undefined 
-        }"
-        @click="(e) => onNodeClick(node, e)"
-      >
-        <template v-if="node.type === 'root'">
-          <div class="root-circle">
-            <span>THINKLAB</span>
-          </div>
-        </template>
-        <template v-else-if="node.type === 'track'">
-          <div class="track-label" :style="{ color: node.color }">
-            {{ node.title }}
-          </div>
-        </template>
-        <template v-else>
-          <strong>{{ node.title }}</strong>
-          <!-- Removed track title as requested -->
-        </template>
-      </div>
-    </div>
+  <div class="tree-viewport" ref="container">
+    <svg ref="svgRef" style="width: 100%; height: 100%;"></svg>
   </div>
 </template>
+
+<style scoped>
+.tree-viewport {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+}
+</style>

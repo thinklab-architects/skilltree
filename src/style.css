@@ -170,55 +170,7 @@ p {
   cursor: grabbing;
 }
 
-#treeLines {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-}
-
-#treeNodes {
-  position: absolute;
-  inset: 0;
-}
-
-.tree-node {
-  position: absolute;
-  width: 190px;
-  padding: 12px 16px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  background: #fff;
-  color: var(--ink);
-  font-weight: 600;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.08);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  transform: translate(-50%, -50%);
-  /* Center the node on its coordinates */
-  z-index: 2;
-}
-
-.tree-node span {
-  display: block;
-  font-size: 0.8rem;
-  color: var(--muted);
-}
-
-.tree-node:hover {
-  transform: translate(-50%, -50%) translateY(-4px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-  z-index: 3;
-}
-
-.tree-node.dimmed {
-  opacity: 0.35;
-}
-
-.tree-node.active {
-  border-color: var(--accent);
-  box-shadow: 0 18px 30px rgba(255, 122, 24, 0.35);
-}
+/* Old map styles removed */
 
 /* Sidebar Styles */
 .node-sidebar {
@@ -620,12 +572,14 @@ body.admin-mode #mapView {
     width: 100%;
   }
 }
+
 /* UI Overhaul Styles */
 
 /* Full Screen Map */
 #main-view.full-screen {
   position: fixed;
-  top: 80px; /* Below header */
+  top: 80px;
+  /* Below header */
   left: 0;
   right: 0;
   bottom: 0;
@@ -649,13 +603,13 @@ body.admin-mode #mapView {
 
 #main-view.full-screen .filters,
 #main-view.full-screen .track-grid {
-  display: none; 
+  display: none;
 }
 
 /* View Toggle */
 .view-toggle {
   display: flex;
-  background: rgba(0,0,0,0.05);
+  background: rgba(0, 0, 0, 0.05);
   padding: 4px;
   border-radius: 99px;
   gap: 4px;
@@ -676,7 +630,7 @@ body.admin-mode #mapView {
 .toggle-btn.active {
   background: #fff;
   color: var(--ink);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
 /* List View */
@@ -688,6 +642,15 @@ body.admin-mode #mapView {
 
 .list-view .container {
   width: 100%;
+}
+
+/* Old map styles removed */
+
+/* Adjust filters for List View */
+.list-view .filters {
+  border: none;
+  background: transparent;
+  padding: 0 0 24px 0;
 }
 
 .tutorial-grid {
@@ -708,7 +671,7 @@ body.admin-mode #mapView {
 
 .tutorial-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
   border-color: var(--accent);
 }
 
@@ -753,33 +716,7 @@ body.admin-mode #mapView {
 
 
 /* Center Hub Styling */
-.tree-node.root-node {
-  width: 80px;
-  height: 80px;
-  padding: 0;
-  border-radius: 50%;
-  background: var(--accent);
-  border: none;
-  box-shadow: 0 0 20px var(--accent);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  animation: pulse 2s infinite;
-}
-
-.root-circle {
-  color: #fff;
-  font-weight: 700;
-  font-size: 12px;
-  text-align: center;
-  line-height: 1.2;
-}
-
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(255, 122, 24, 0.7); }
-  70% { box-shadow: 0 0 0 20px rgba(255, 122, 24, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 122, 24, 0); }
-}
+/* Center Hub Styling handled in D3 now */
 
 
 /* Adjust filters for List View */
@@ -791,26 +728,4 @@ body.admin-mode #mapView {
 
 
 /* Track Node Styling */
-.tree-node.track-node {
-  width: auto;
-  min-width: 120px;
-  height: auto;
-  padding: 10px 20px;
-  border-radius: 12px;
-  background: #fff;
-  border: 2px solid currentColor; /* Uses the inline style borderColor */
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1;
-}
-
-.track-label {
-  font-weight: 800;
-  font-size: 16px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: center;
-}
-
+/* Track Node Styling handled in D3 now */
