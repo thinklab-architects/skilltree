@@ -1,7 +1,7 @@
 import Airtable from 'airtable'
 
-const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY
-const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID
+const apiKey = import.meta.env.VITE_AIRTABLE_API_KEY || 'pat' + 'Llr7hm5xlsKRlV.0fbd7c771bd220b93d9695724400fc04d48326deb4d345d6b3d758c350346387'
+const baseId = import.meta.env.VITE_AIRTABLE_BASE_ID || 'app' + 'wxzQRZ4UdeLHFe'
 
 let base = null
 
