@@ -9,67 +9,39 @@
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+<body class="tree-app">
   <div class="ambient ambient-a"></div>
   <div class="ambient ambient-b"></div>
-  <header class="hero">
-    <div class="nav">
-      <div class="brand">
-        <div class="dot"></div>
-        <span>Architect Skill Trails</span>
-      </div>
-      <div class="nav-actions">
-        <a class="ghost" href="#tracks">Explore</a>
-        <button id="adminToggle" class="pill ghost">Admin / Edit</button>
+
+  <header class="tree-header">
+    <div class="brand">
+      <div class="dot"></div>
+      <div>
+        <p class="eyebrow">Architect Skill Trails</p>
+        <h1>Meteor Map</h1>
       </div>
     </div>
-    <div class="hero-grid">
-      <div class="hero-text">
-        <p class="eyebrow">Architecture Ops / Tutorial Trails</p>
-        <h1>Build a repeatable training path for the studio.</h1>
-        <p class="lede">
-          Curated modules, ready-to-run assets, and a backstage editor so practice leads can publish updates without touching code.
-        </p>
-        <div class="hero-actions">
-          <button class="pill" id="ctaExplore">View the trails</button>
-          <button class="pill outline" id="ctaAdd">Log in to edit</button>
-        </div>
-        <div class="hero-metrics" id="heroMetrics"></div>
-      </div>
-      <div class="hero-card">
-        <div class="card-head">
-          <div>
-            <p class="eyebrow">Workboard</p>
-            <h3>Studio Enablement</h3>
-          </div>
-          <div class="status-dot status-ready">Ready</div>
-        </div>
-        <ul class="mini-list" id="miniList"></ul>
-        <div class="hero-foot">
-          <p class="hint">Traffic lights show what is ready, in review, or still cooking.</p>
-        </div>
-      </div>
+    <div class="header-actions">
+      <button class="pill ghost" id="listViewBtn">List view</button>
+      <button class="pill" id="adminToggle">Admin / Edit</button>
     </div>
   </header>
 
   <main>
-    <section class="map-section" id="mapSection">
-      <div class="map-header">
-        <div>
-          <p class="eyebrow">Map view</p>
-          <h2>See the trails as a map</h2>
-          <p class="lede">
-            Each column represents a track and every node is a module. The lines guide you through the flow of materials so you can trace dependencies at a glance.
-          </p>
+    <section class="tree-stage" id="mapSection">
+      <svg id="trailMapSvg" role="img" aria-label="Skill trail map"></svg>
+      <div id="treeNodes" aria-live="polite"></div>
+      <div class="tree-overlay">
+        <div class="metrics-card">
+          <p class="eyebrow">Studio pulse</p>
+          <div class="hero-metrics" id="heroMetrics"></div>
+          <ul class="mini-list" id="miniList"></ul>
         </div>
-        <div class="map-legend">
+        <div class="map-legend legend-stack">
           <div class="legend-item"><span class="legend-dot status-ready"></span>Ready</div>
           <div class="legend-item"><span class="legend-dot status-in-review"></span>In review</div>
           <div class="legend-item"><span class="legend-dot status-draft"></span>Draft</div>
         </div>
-      </div>
-      <div class="map-wrapper">
-        <svg id="trailMapSvg" viewBox="0 0 960 320" role="img" aria-label="Skill trail map"></svg>
       </div>
     </section>
 
@@ -201,6 +173,17 @@
     </section>
   </main>
 
+  <aside class="node-drawer" id="nodeDrawer" aria-live="assertive">
+    <button class="drawer-close" id="drawerClose" aria-label="Close module details">&times;</button>
+    <p class="eyebrow" id="drawerTrack"></p>
+    <h2 id="drawerTitle"></h2>
+    <p class="hint" id="drawerStatus"></p>
+    <p id="drawerSummary"></p>
+    <div class="drawer-meta" id="drawerMeta"></div>
+    <div class="drawer-tags" id="drawerTags"></div>
+    <div class="drawer-links" id="drawerLinks"></div>
+  </aside>
+
   <section class="admin-login" id="adminLoginPage" aria-hidden="true">
     <div class="login-card">
       <button class="close-login" id="adminLoginClose" aria-label="Close admin login">&times;</button>
@@ -230,8 +213,4 @@
   <script src="app.js"></script>
 </body>
 </html>
-
-
-
-
 

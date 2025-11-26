@@ -6,7 +6,7 @@ const miniListEl = document.getElementById('miniList');
 const searchInput = document.getElementById('searchInput');
 const adminPanel = document.getElementById('adminPanel');
 const adminToggle = document.getElementById('adminToggle');
-const adminLogin = document.getElementById('adminLogin');
+const adminLoginForm = document.getElementById('adminLogin');
 const tokenInput = document.getElementById('tokenInput');
 const tokenStatus = document.getElementById('tokenStatus');
 const moduleSelect = document.getElementById('moduleSelect');
@@ -15,7 +15,7 @@ const moduleMessage = document.getElementById('moduleMessage');
 const moduleTitle = document.getElementById('moduleTitle');
 const moduleTrack = document.getElementById('moduleTrack');
 const moduleSummary = document.getElementById('moduleSummary');
-const moduleStatus = document.getElementById('moduleStatus');
+const moduleStatusEl = document.getElementById('moduleStatus');
 const moduleLevel = document.getElementById('moduleLevel');
 const moduleDuration = document.getElementById('moduleDuration');
 const moduleTags = document.getElementById('moduleTags');
@@ -32,9 +32,18 @@ const trackFocus = document.getElementById('trackFocus');
 const trackLead = document.getElementById('trackLead');
 const trackColor = document.getElementById('trackColor');
 const trackMessage = document.getElementById('trackMessage');
-const ctaExplore = document.getElementById('ctaExplore');
-const ctaAdd = document.getElementById('ctaAdd');
 const trailMapSvg = document.getElementById('trailMapSvg');
+const treeNodes = document.getElementById('treeNodes');
+const nodeDrawer = document.getElementById('nodeDrawer');
+const drawerClose = document.getElementById('drawerClose');
+const drawerTrack = document.getElementById('drawerTrack');
+const drawerTitle = document.getElementById('drawerTitle');
+const drawerStatus = document.getElementById('drawerStatus');
+const drawerSummary = document.getElementById('drawerSummary');
+const drawerMeta = document.getElementById('drawerMeta');
+const drawerTags = document.getElementById('drawerTags');
+const drawerLinks = document.getElementById('drawerLinks');
+const listViewBtn = document.getElementById('listViewBtn');
 const adminLoginPage = document.getElementById('adminLoginPage');
 const adminLoginClose = document.getElementById('adminLoginClose');
 
@@ -44,7 +53,8 @@ const dataUrl = staticMode ? 'data/trails.json' : '/api/trails';
 const state = {
   data: { tracks: [], tutorials: [] },
   filters: { status: 'all', search: '', track: 'all' },
-  adminToken: sessionStorage.getItem('adminToken') || ''
+  adminToken: sessionStorage.getItem('adminToken') || '',
+  selectedModuleId: null
 };
 
 const statusLabels = {
@@ -69,9 +79,7 @@ const statusColors = {
 async function loadData() {
   try {
     const res = await fetch(dataUrl);
-    if (!res.ok) {
-      throw new Error(`Request failed: ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`Request failed: ${res.status}`);
     const data = await res.json();
     state.data = data;
     renderFilters();
@@ -86,10 +94,10 @@ async function loadData() {
 }
 
 function renderFilters() {
+  if (!trackFiltersEl) return;
   trackFiltersEl.innerHTML = '';
   const allBtn = createChip('All tracks', 'all', state.filters.track === 'all');
   trackFiltersEl.appendChild(allBtn);
-
   state.data.tracks.forEach(track => {
     const btn = createChip(track.title, track.id, state.filters.track === track.id);
     btn.style.borderColor = track.color;
@@ -107,24 +115,26 @@ function createChip(label, value, active) {
     state.filters.track = value;
     renderFilters();
     renderTracks();
+    renderMap();
   });
   return btn;
 }
 
 function renderMetrics() {
+  if (!heroMetricsEl || !miniListEl) return;
   const { tutorials } = state.data;
   const ready = tutorials.filter(t => t.status === 'ready').length;
   const review = tutorials.filter(t => t.status === 'in-review').length;
   const draft = tutorials.filter(t => t.status === 'draft').length;
-
   heroMetricsEl.innerHTML = `
     <div class="metric"><div class="label">Tutorials</div><div class="value">${tutorials.length}</div></div>
     <div class="metric"><div class="label">Ready</div><div class="value">${ready}</div></div>
     <div class="metric"><div class="label">In review</div><div class="value">${review}</div></div>
     <div class="metric"><div class="label">Draft</div><div class="value">${draft}</div></div>
   `;
-
-  const featured = [...tutorials].sort((a, b) => statusScore(a.status) - statusScore(b.status)).slice(0, 4);
+  const featured = [...tutorials]
+    .sort((a, b) => statusScore(a.status) - statusScore(b.status))
+    .slice(0, 4);
   miniListEl.innerHTML = featured.map(item => `
     <li class="mini-item">
       <div>
@@ -137,9 +147,9 @@ function renderMetrics() {
 }
 
 function renderTracks() {
+  if (!tracksEl) return;
   const filtered = applyFilters();
   tracksEl.innerHTML = '';
-
   state.data.tracks.forEach(track => {
     const tutorials = filtered.filter(t => t.trackId === track.id);
     const card = document.createElement('article');
@@ -162,77 +172,64 @@ function renderTracks() {
 }
 
 function renderMap() {
-  if (!trailMapSvg) return;
+  if (!trailMapSvg || !treeNodes) return;
   const tracks = state.data.tracks;
   const tutorials = state.data.tutorials;
   if (!tracks.length) {
-    trailMapSvg.innerHTML = '<text x="10" y="20" class="map-node-label">No map data.</text>';
+    trailMapSvg.innerHTML = '';
+    treeNodes.innerHTML = '<p class="hint">No data.</p>';
     return;
   }
-
-  const ns = 'http://www.w3.org/2000/svg';
-  const width = Math.max(trailMapSvg.clientWidth, 640);
-  const modulesPerTrack = tracks.map(track => tutorials.filter(t => t.trackId === track.id).length);
-  const maxItems = Math.max(...modulesPerTrack, 1);
-  const height = Math.max(260, maxItems * 90);
+  const stage = document.getElementById('mapSection');
+  const width = stage ? stage.clientWidth : treeNodes.clientWidth || 960;
+  const height = Math.max(stage ? stage.clientHeight : 520, 520);
+  treeNodes.style.height = `${height}px`;
   trailMapSvg.setAttribute('viewBox', `0 0 ${width} ${height}`);
-  trailMapSvg.style.height = `${Math.min(420, height)}px`;
   trailMapSvg.innerHTML = '';
-
-  const spacingX = width / (tracks.length + 1);
-
+  treeNodes.innerHTML = '';
+  const matches = new Set(applyFilters().map(item => item.id));
+  const columnSpacing = width / (tracks.length + 1);
+  const connectors = [];
   tracks.forEach((track, index) => {
-    const trackModules = tutorials
-      .filter(module => module.trackId === track.id)
-      .sort((a, b) => statusScore(a.status) - statusScore(b.status));
-
-    const columnX = spacingX * (index + 1);
-    const label = document.createElementNS(ns, 'text');
-    label.textContent = track.title;
-    label.setAttribute('x', columnX);
-    label.setAttribute('y', 24);
-    label.setAttribute('text-anchor', 'middle');
-    label.classList.add('map-track-label');
-    trailMapSvg.appendChild(label);
-
-    if (trackModules.length > 1) {
-      const points = trackModules.map((_, idx) => {
-        const cy = height * ((idx + 1) / (trackModules.length + 1));
-        return `${columnX},${cy}`;
-      });
-      const path = document.createElementNS(ns, 'polyline');
-      path.setAttribute('points', points.join(' '));
-      path.setAttribute('stroke', track.color || '#fff');
-      path.setAttribute('class', 'map-connector');
-      trailMapSvg.appendChild(path);
-    }
-
-    const count = Math.max(trackModules.length, 1);
-    const gap = height / (count + 1);
-    trackModules.forEach((module, modIndex) => {
-      const cy = gap * (modIndex + 1);
-      const circle = document.createElementNS(ns, 'circle');
-      circle.setAttribute('cx', columnX);
-      circle.setAttribute('cy', cy);
-      circle.setAttribute('r', 10);
-      circle.setAttribute('fill', statusColors[module.status] || statusColors.default);
-      circle.setAttribute('stroke', track.color || 'rgba(255,255,255,0.5)');
-      circle.setAttribute('stroke-width', '2');
-      circle.classList.add('map-node');
-      const title = document.createElementNS(ns, 'title');
-      title.textContent = `${module.title} • ${statusLabels[module.status] || module.status}`;
-      circle.appendChild(title);
-      trailMapSvg.appendChild(circle);
-
-      const text = document.createElementNS(ns, 'text');
-      text.textContent = module.title;
-      text.setAttribute('x', columnX + 16);
-      text.setAttribute('y', cy + 4);
-      text.setAttribute('text-anchor', 'start');
-      text.classList.add('map-node-label');
-      trailMapSvg.appendChild(text);
+    const modules = tutorials.filter(t => t.trackId === track.id);
+    const spacing = modules.length ? height / (modules.length + 1) : height / 2;
+    modules.forEach((module, idx) => {
+      const x = columnSpacing * (index + 1);
+      const y = spacing * (idx + 1);
+      if (idx < modules.length - 1) {
+        const nextY = spacing * (idx + 2);
+        connectors.push({ x1: x, y1: y, x2: x, y2: nextY, color: track.color, bend: idx % 2 === 0 ? 1 : -1 });
+      }
+      createNode(module, track, x, y, matches.has(module.id));
     });
   });
+  const ns = 'http://www.w3.org/2000/svg';
+  connectors.forEach(conn => {
+    const path = document.createElementNS(ns, 'path');
+    const controlOffset = 90;
+    const controlX = conn.x1 + controlOffset * (conn.bend || 1);
+    const middleY = (conn.y1 + conn.y2) / 2;
+    const d = `M ${conn.x1} ${conn.y1} C ${controlX} ${middleY}, ${controlX} ${middleY}, ${conn.x2} ${conn.y2}`;
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', conn.color || 'rgba(255,255,255,0.25)');
+    path.setAttribute('stroke-width', '2');
+    path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('opacity', '0.35');
+    trailMapSvg.appendChild(path);
+  });
+}
+
+function createNode(module, track, x, y, isMatch) {
+  const node = document.createElement('button');
+  node.className = 'tree-node';
+  if (!isMatch) node.classList.add('dimmed');
+  if (state.selectedModuleId === module.id) node.classList.add('active');
+  node.style.left = `${x - 80}px`;
+  node.style.top = `${y - 32}px`;
+  node.innerHTML = `<strong>${module.title}</strong><span>${track.title}</span>`;
+  node.addEventListener('click', () => openDrawer(module.id));
+  treeNodes.appendChild(node);
 }
 
 function renderTutorial(tutorial, track) {
@@ -261,6 +258,33 @@ function renderTutorial(tutorial, track) {
   `;
 }
 
+function openDrawer(moduleId) {
+  const module = state.data.tutorials.find(t => t.id === moduleId);
+  if (!module || !nodeDrawer) return;
+  const track = state.data.tracks.find(t => t.id === module.trackId) || {};
+  state.selectedModuleId = moduleId;
+  drawerTrack.textContent = track.title || 'Practice module';
+  drawerTitle.textContent = module.title || '';
+  drawerStatus.textContent = `${statusLabels[module.status] || module.status || 'draft'} · ${module.duration || 'time tbd'}`;
+  drawerSummary.textContent = module.summary || 'No summary yet.';
+  const metaParts = [];
+  if (module.owner) metaParts.push(`<span class="pill-sm">Owner · ${module.owner}</span>`);
+  if (module.level) metaParts.push(`<span class="pill-sm">${module.level}</span>`);
+  if (module.highlight) metaParts.push(`<span class="pill-sm">${module.highlight}</span>`);
+  drawerMeta.innerHTML = metaParts.join('');
+  drawerTags.innerHTML = (module.tags || []).map(tag => `<span class="pill-sm">#${tag}</span>`).join('');
+  drawerLinks.innerHTML = (module.links || []).map(link => `<a href="${link.url}" target="_blank" rel="noreferrer">${link.label || 'Open resource'}</a>`).join('');
+  nodeDrawer.classList.add('open');
+  renderMap();
+}
+
+function closeDrawer() {
+  if (!nodeDrawer) return;
+  nodeDrawer.classList.remove('open');
+  state.selectedModuleId = null;
+  renderMap();
+}
+
 function applyFilters() {
   const term = state.filters.search.toLowerCase();
   return state.data.tutorials.filter(t => {
@@ -281,77 +305,143 @@ function statusScore(status) {
   }
 }
 
-function setStatusFilter(value) {
-  state.filters.status = value;
-  statusFiltersEl.querySelectorAll('.chip').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.status === value);
-  });
-  renderTracks();
-}
-
 function setupStatusFilters() {
+  if (!statusFiltersEl) return;
   statusFiltersEl.querySelectorAll('.chip').forEach(btn => {
     btn.addEventListener('click', () => {
-      setStatusFilter(btn.dataset.status);
+      state.filters.status = btn.dataset.status;
+      statusFiltersEl.querySelectorAll('.chip').forEach(chip => {
+        chip.classList.toggle('active', chip === btn);
+      });
+      renderTracks();
+      renderMap();
     });
   });
 }
 
 function setupSearch() {
+  if (!searchInput) return;
   searchInput.addEventListener('input', e => {
     state.filters.search = e.target.value;
     renderTracks();
+    renderMap();
   });
+}
+
+function setupCTA() {
+  if (listViewBtn) {
+    listViewBtn.addEventListener('click', () => {
+      document.querySelector('.filters')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  }
 }
 
 function setupAdmin() {
   if (!tokenInput || !tokenStatus) return;
   tokenInput.value = state.adminToken;
   updateTokenStatus();
-
   hideAdminPanel();
   if (!staticMode && state.adminToken) {
     showAdminPanel();
   }
-
   if (adminToggle) {
     adminToggle.addEventListener('click', () => openAdminLogin(true));
-  }
-  if (ctaAdd) {
-    ctaAdd.addEventListener('click', () => openAdminLogin(true));
   }
   if (adminLoginClose) {
     adminLoginClose.addEventListener('click', () => closeAdminLogin());
   }
-
   if (staticMode) {
     lockAdminUI();
     return;
   }
-
-  if (adminLogin) {
-    adminLogin.addEventListener('submit', handleAdminLogin);
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener('submit', handleAdminLogin);
   }
 }
 
-function scrollToAdmin() {
+function handleAdminLogin(e) {
+  e.preventDefault();
+  const submitted = tokenInput.value.trim();
+  if (!submitted) {
+    updateTokenStatus('Please enter your ADMIN_TOKEN.');
+    return;
+  }
+  state.adminToken = submitted;
+  sessionStorage.setItem('adminToken', state.adminToken);
+  updateTokenStatus('Token saved. Unlocking editor...');
+  closeAdminLogin();
+  showAdminPanel();
+}
+
+function updateTokenStatus(message) {
+  if (!tokenStatus) return;
+  tokenStatus.textContent = message
+    ? message
+    : (state.adminToken ? 'Token ready. Close this dialog to edit.' : 'Enter your ADMIN_TOKEN to unlock editing.');
+}
+
+function openAdminLogin(focusInput = false) {
+  if (!adminLoginPage) return;
+  adminLoginPage.classList.add('open');
+  adminLoginPage.setAttribute('aria-hidden', 'false');
+  if (focusInput && tokenInput && !tokenInput.disabled) {
+    setTimeout(() => tokenInput.focus(), 200);
+  }
+}
+
+function closeAdminLogin() {
+  if (!adminLoginPage) return;
+  adminLoginPage.classList.remove('open');
+  adminLoginPage.setAttribute('aria-hidden', 'true');
+}
+
+function showAdminPanel() {
   if (!adminPanel) return;
-  adminPanel.scrollIntoView({ behavior: 'smooth' });
+  adminPanel.classList.remove('hidden');
+  setTimeout(() => adminPanel.scrollIntoView({ behavior: 'smooth' }), 150);
+}
+
+function hideAdminPanel() {
+  if (!adminPanel) return;
+  adminPanel.classList.add('hidden');
+}
+
+function lockAdminUI() {
+  hideAdminPanel();
+  updateTokenStatus('Admin editing is disabled on this static build. Clone the repo and run the server to edit.');
+  if (tokenInput) tokenInput.disabled = true;
+  if (adminLoginForm) {
+    const submitBtn = adminLoginForm.querySelector('button');
+    if (submitBtn) submitBtn.disabled = true;
+  }
+}
+
+function setupModuleSelect() {
+  if (!moduleSelect) return;
+  moduleSelect.addEventListener('change', e => {
+    const id = e.target.value;
+    if (id === 'new') {
+      resetModuleForm();
+    } else {
+      hydrateModuleForm(id);
+    }
+  });
 }
 
 function fillAdminSelects() {
+  if (!moduleTrack || !moduleSelect) return;
   moduleTrack.innerHTML = state.data.tracks.map(t => `<option value="${t.id}">${t.title}</option>`).join('');
-
   const options = ['<option value="new">New module</option>']
     .concat(state.data.tutorials.map(t => `<option value="${t.id}">${t.title}</option>`));
   moduleSelect.innerHTML = options.join('');
 }
 
 function resetModuleForm() {
+  if (!moduleSelect) return;
   moduleSelect.value = 'new';
   moduleTitle.value = '';
   moduleSummary.value = '';
-  moduleStatus.value = 'draft';
+  moduleStatusEl.value = 'draft';
   moduleLevel.value = '';
   moduleDuration.value = '';
   moduleTags.value = '';
@@ -370,7 +460,7 @@ function hydrateModuleForm(moduleId) {
   }
   moduleTitle.value = module.title || '';
   moduleSummary.value = module.summary || '';
-  moduleStatus.value = module.status || 'draft';
+  moduleStatusEl.value = module.status || 'draft';
   moduleLevel.value = module.level || '';
   moduleDuration.value = module.duration || '';
   moduleTags.value = (module.tags || []).join(', ');
@@ -382,9 +472,10 @@ function hydrateModuleForm(moduleId) {
 }
 
 function renderLinkFields(links) {
+  if (!linkFields) return;
   linkFields.innerHTML = '';
-  if (!links.length) links = [{ label: '', url: '' }];
-  links.forEach(link => addLinkField(link));
+  const list = links.length ? links : [{ label: '', url: '' }];
+  list.forEach(link => addLinkField(link));
 }
 
 function addLinkField(link = { label: '', url: '' }) {
@@ -399,6 +490,16 @@ function addLinkField(link = { label: '', url: '' }) {
   linkFields.appendChild(row);
 }
 
+function collectLinks() {
+  return [...linkFields.querySelectorAll('.link-fields')]
+    .map(row => {
+      const label = row.querySelector('.link-label').value.trim();
+      const url = row.querySelector('.link-url').value.trim();
+      return label || url ? { label, url } : null;
+    })
+    .filter(Boolean);
+}
+
 async function saveModule(e) {
   e.preventDefault();
   if (!state.adminToken) {
@@ -410,7 +511,7 @@ async function saveModule(e) {
     title: moduleTitle.value.trim(),
     trackId: moduleTrack.value,
     summary: moduleSummary.value.trim(),
-    status: moduleStatus.value,
+    status: moduleStatusEl.value,
     level: moduleLevel.value.trim(),
     duration: moduleDuration.value.trim(),
     tags: moduleTags.value.split(',').map(t => t.trim()).filter(Boolean),
@@ -421,7 +522,6 @@ async function saveModule(e) {
   const isNew = id === 'new';
   const url = isNew ? '/api/tutorials' : `/api/tutorials/${id}`;
   const method = isNew ? 'POST' : 'PUT';
-
   const res = await fetch(url, {
     method,
     headers: {
@@ -430,12 +530,10 @@ async function saveModule(e) {
     },
     body: JSON.stringify(payload)
   });
-
   if (!res.ok) {
     moduleMessage.textContent = `Save failed: ${res.status}`;
     return;
   }
-
   moduleMessage.textContent = 'Saved.';
   await loadData();
   if (isNew) {
@@ -444,14 +542,6 @@ async function saveModule(e) {
     moduleSelect.value = id;
     hydrateModuleForm(id);
   }
-}
-
-function collectLinks() {
-  return [...linkFields.querySelectorAll('.link-fields')].map(row => {
-    const label = row.querySelector('.link-label').value.trim();
-    const url = row.querySelector('.link-url').value.trim();
-    return label || url ? { label, url } : null;
-  }).filter(Boolean);
 }
 
 async function deleteModule() {
@@ -508,17 +598,6 @@ async function saveTrack(e) {
   await loadData();
 }
 
-function setupModuleSelect() {
-  moduleSelect.addEventListener('change', e => {
-    const id = e.target.value;
-    if (id === 'new') {
-      resetModuleForm();
-    } else {
-      hydrateModuleForm(id);
-    }
-  });
-}
-
 function setupAdminForms() {
   if (staticMode) return;
   moduleForm.addEventListener('submit', saveModule);
@@ -526,12 +605,6 @@ function setupAdminForms() {
   resetModuleBtn.addEventListener('click', resetModuleForm);
   addLinkBtn.addEventListener('click', () => addLinkField());
   trackForm.addEventListener('submit', saveTrack);
-}
-
-function setupCTA() {
-  ctaExplore.addEventListener('click', () => {
-    document.getElementById('tracks').scrollIntoView({ behavior: 'smooth' });
-  });
 }
 
 function init() {
@@ -542,71 +615,17 @@ function init() {
   setupAdminForms();
   setupCTA();
   resetModuleForm();
+  if (drawerClose) drawerClose.addEventListener('click', closeDrawer);
+  if (nodeDrawer) nodeDrawer.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeDrawer();
+  });
   loadData();
 }
 
-function handleAdminLogin(e) {
-  e.preventDefault();
-  const submitted = tokenInput.value.trim();
-  if (!submitted) {
-    updateTokenStatus('Please enter your ADMIN_TOKEN.');
-    return;
-  }
-  state.adminToken = submitted;
-  sessionStorage.setItem('adminToken', state.adminToken);
-  updateTokenStatus('Token saved. Unlocking editor...');
-  closeAdminLogin();
-  showAdminPanel();
-}
-
-function updateTokenStatus(message) {
-  if (!tokenStatus) return;
-  if (message) {
-    tokenStatus.textContent = message;
-    return;
-  }
-  tokenStatus.textContent = state.adminToken
-    ? 'Token ready. Close this dialog to edit.'
-    : 'Enter your ADMIN_TOKEN to unlock editing.';
-}
-
-function openAdminLogin(focusInput = false) {
-  if (!adminLoginPage) return;
-  adminLoginPage.classList.add('open');
-  adminLoginPage.setAttribute('aria-hidden', 'false');
-  if (focusInput && tokenInput && !tokenInput.disabled) {
-    setTimeout(() => tokenInput.focus(), 200);
-  }
-}
-
-function closeAdminLogin() {
-  if (!adminLoginPage) return;
-  adminLoginPage.classList.remove('open');
-  adminLoginPage.setAttribute('aria-hidden', 'true');
-}
-
-function showAdminPanel() {
-  if (!adminPanel) return;
-  adminPanel.classList.remove('hidden');
-  setTimeout(() => scrollToAdmin(), 150);
-}
-
-function hideAdminPanel() {
-  if (!adminPanel) return;
-  adminPanel.classList.add('hidden');
-}
-
-function lockAdminUI() {
-  hideAdminPanel();
-  updateTokenStatus('Admin editing is disabled on this static build. Clone the repo and run the server to edit.');
-  if (tokenInput) tokenInput.disabled = true;
-  if (adminLogin) {
-    const submitBtn = adminLogin.querySelector('button');
-    if (submitBtn) submitBtn.disabled = true;
-  }
-}
-
 window.addEventListener('resize', () => renderMap());
-
+window.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && nodeDrawer?.classList.contains('open')) {
+    closeDrawer();
+  }
+});
 init();
-
