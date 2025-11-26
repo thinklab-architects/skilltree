@@ -252,7 +252,7 @@ const initMap = () => {
   node.on('mouseenter', function(event, d) {
     if (d.type === 'tutorial') {
       d3.select(this).select('path')
-        .attr('fill', d.color)
+        .attr('fill', 'rgba(0, 0, 0, 0.7)') // Dark semi-transparent background
         .attr('transform', 'scale(2.2)')
         .style('filter', `drop-shadow(0 0 15px ${d.color})`)
         
