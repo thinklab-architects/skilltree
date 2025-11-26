@@ -1,18 +1,4 @@
 $ErrorActionPreference = "Stop"
-
-Write-Host "Starting auto-deployment process..." -ForegroundColor Cyan
-
-# Check git status
-$status = git status --porcelain
-if ([string]::IsNullOrWhiteSpace($status)) {
-    Write-Host "No changes to deploy." -ForegroundColor Yellow
-    exit
-}
-
-# Add all changes
-Write-Host "Adding files..." -ForegroundColor Green
-git add .
-
 # Commit changes
 $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 $message = "Auto deploy: $timestamp"

@@ -1,0 +1,139 @@
+<script setup>
+import { ref, onMounted, computed } from 'vue'
+import TheHeader from './components/TheHeader.vue'
+import TheMap from './components/TheMap.vue'
+import TheSidebar from './components/TheSidebar.vue'
+import TheBackstage from './components/TheBackstage.vue'
+
+import { fetchAirtableData, isAirtableConfigured } from './services/airtable'
+
+const isAdminMode = new URL(window.location.href).searchParams.get('mode') === 'admin'
+const data = ref({ tracks: [], tutorials: [] })
+const filters = ref({ search: '', track: 'all' })
+const sidebarId = ref(null)
+const isSidebarOpen = ref(false)
+
+const loadData = async () => {
+  try {
+    if (isAirtableConfigured()) {
+      console.log('Fetching from Airtable...')
+      data.value = await fetchAirtableData()
+    } else {
+      console.log('Fetching from local JSON...')
+      const dataUrl = window.location.protocol === 'file:' || window.location.hostname.includes('github.io')
+        ? 'data/trails.json'
+        : '/api/trails'
+      const res = await fetch(dataUrl)
+      if (!res.ok) throw new Error(`Request failed: ${res.status}`)
+      data.value = await res.json()
+    }
+  } catch (err) {
+    console.error('Failed to load trails data', err)
+  }
+}
+
+const filteredTutorials = computed(() => {
+  const term = filters.value.search.toLowerCase()
+  return data.value.tutorials.filter(t => {
+    const trackOk = filters.value.track === 'all' || t.trackId === filters.value.track
+    const text = `${t.title} ${t.summary} ${(t.tags || []).join(' ')} ${t.owner || ''}`.toLowerCase()
+    const searchOk = !term || text.includes(term)
+    return trackOk && searchOk
+  })
+})
+
+const openSidebar = (id) => {
+  sidebarId.value = id
+  isSidebarOpen.value = true
+}
+
+const closeSidebar = () => {
+  isSidebarOpen.value = false
+}
+
+onMounted(() => {
+  loadData()
+})
+</script>
+
+<template>
+  <div class="tree-app">
+    <TheHeader />
+    
+    <main v-if="!isAdminMode" id="mapView">
+      <section class="tree-stage">
+        <div class="tree-toolbar">
+          <div>
+            <p class="eyebrow">Radial explorer</p>
+            <p>Drag to explore the practice map. Tracks radiate from the center hub.</p>
+          </div>
+        </div>
+        
+        <TheMap 
+          :tracks="data.tracks" 
+          :tutorials="data.tutorials" 
+          :filtered-tutorials="filteredTutorials"
+          @node-click="openSidebar"
+        />
+      </section>
+
+      <section class="filters">
+        <div class="filter-row">
+          <div class="filter-group">
+            <label class="hint">Search</label>
+            <input type="search" v-model="filters.search" placeholder="Search tutorials, tags, or owners">
+          </div>
+
+          <div class="filter-group">
+            <label class="hint">Tracks</label>
+            <div class="chip-row">
+              <button 
+                class="chip" 
+                :class="{ active: filters.track === 'all' }" 
+                @click="filters.track = 'all'"
+              >All tracks</button>
+              <button 
+                v-for="track in data.tracks" 
+                :key="track.id"
+                class="chip"
+                :class="{ active: filters.track === track.id }"
+                :style="filters.track === track.id ? { borderColor: track.color, color: track.color } : {}"
+                @click="filters.track = track.id"
+              >
+                {{ track.title }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      <section class="track-grid">
+        <!-- Track grid content if needed, currently empty in original app.js logic for viewer -->
+      </section>
+    </main>
+
+    <TheBackstage v-else :data="data" @refresh="loadData" />
+
+    <TheSidebar 
+      :is-open="isSidebarOpen" 
+      :tutorial-id="sidebarId" 
+      :tutorials="data.tutorials"
+      @close="closeSidebar"
+    />
+    
+    <footer class="footer" v-if="!isAdminMode">
+      <div>
+        <p class="eyebrow">Deploy</p>
+        <p>GitHub Pages: serve the docs folder (includes data/trails.json). For editable mode, run npm start on a Node host and set ADMIN_TOKEN.</p>
+      </div>
+      <div>
+        <p class="eyebrow">Usage</p>
+        <p>Practice leads edit via the admin token; the rest of the team views the live trail.</p>
+      </div>
+    </footer>
+  </div>
+</template>
+
+<style>
+/* Global styles will be imported in main.js */
+</style>
