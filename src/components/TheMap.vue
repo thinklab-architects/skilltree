@@ -139,13 +139,17 @@ const initMap = () => {
       .on('drag', dragged)
       .on('end', dragended))
 
+  // Regular Pentagon for Root
+  const regularPentagon = 'M0,-20 L19,-6 L12,16 L-12,16 L-19,-6 Z'
+
   // Node Shapes
   node.each(function(d) {
     const el = d3.select(this)
     
     if (d.type === 'root') {
-      el.append('circle')
-        .attr('r', 40)
+      el.append('path')
+        .attr('d', regularPentagon)
+        .attr('transform', 'scale(1.5)') // Resulting size approx r=30 (smaller than previous r=40)
         .attr('fill', '#ff7a18')
         .style('filter', 'drop-shadow(0 0 15px rgba(255, 122, 24, 0.6))')
       
@@ -155,7 +159,8 @@ const initMap = () => {
         .attr('dy', 4)
         .attr('fill', 'white')
         .style('font-weight', 'bold')
-        .style('font-size', '12px')
+        .style('font-size', '10px') // Slightly smaller font to fit
+
         
     } else if (d.type === 'track') {
       el.append('path')
