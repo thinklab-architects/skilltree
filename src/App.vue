@@ -3,11 +3,9 @@ import { ref, onMounted, computed } from 'vue'
 import TheHeader from './components/TheHeader.vue'
 import TheMap from './components/TheMap.vue'
 import TheSidebar from './components/TheSidebar.vue'
-import TheBackstage from './components/TheBackstage.vue'
 
 import { fetchAirtableData, isAirtableConfigured } from './services/airtable'
 
-const isAdminMode = new URL(window.location.href).searchParams.get('mode') === 'admin'
 const data = ref({ tracks: [], tutorials: [] })
 const filters = ref({ search: '', track: 'all' })
 const sidebarId = ref(null)
@@ -60,7 +58,7 @@ onMounted(() => {
   <div class="tree-app">
     <TheHeader />
     
-    <main v-if="!isAdminMode" id="mapView">
+    <main id="mapView">
       <section class="tree-stage">
         <div class="tree-toolbar">
         </div>
@@ -108,8 +106,6 @@ onMounted(() => {
       </section>
     </main>
 
-    <TheBackstage v-else :data="data" @refresh="loadData" />
-
     <TheSidebar 
       :is-open="isSidebarOpen" 
       :tutorial-id="sidebarId" 
@@ -117,14 +113,14 @@ onMounted(() => {
       @close="closeSidebar"
     />
     
-    <footer class="footer" v-if="!isAdminMode">
+    <footer class="footer">
       <div>
         <p class="eyebrow">Deploy</p>
-        <p>GitHub Pages: serve the docs folder (includes data/trails.json). For editable mode, run npm start on a Node host and set ADMIN_TOKEN.</p>
+        <p>GitHub Pages: serve the docs folder (includes data/trails.json). Data is managed via Airtable.</p>
       </div>
       <div>
         <p class="eyebrow">Usage</p>
-        <p>Practice leads edit via the admin token; the rest of the team views the live trail.</p>
+        <p>Team views the live trail.</p>
       </div>
     </footer>
   </div>
