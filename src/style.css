@@ -730,33 +730,22 @@ body.admin-mode #mapView {
 
 /* Track Node Styling */
 /* Track Node Styling handled in D3 now */
-/* Map Search Overlay */
-.map-search-overlay {
-  position: absolute;
-  top: 20px;
-  left: 20px;
-  z-index: 10;
-  width: 300px;
-  max-width: 80vw;
-}
-
-.map-search-overlay input {
-  width: 100%;
-  padding: 12px 20px;
+/* Header Search */
+.header-search input {
+  padding: 8px 16px;
   border-radius: 99px;
-  border: 1px solid rgba(0,0,0,0.1);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  background: rgba(255,255,255,0.9);
-  backdrop-filter: blur(4px);
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.03);
   font-family: inherit;
   font-size: 14px;
+  width: 200px;
   outline: none;
   transition: all 0.2s ease;
 }
 
-.map-search-overlay input:focus {
+.header-search input:focus {
   background: #fff;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(255, 122, 24, 0.1);
+  width: 240px;
 }
-

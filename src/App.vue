@@ -62,6 +62,9 @@ onMounted(() => {
   <div class="tree-app">
     <TheHeader>
       <template #actions>
+        <div class="header-search" v-if="viewMode === 'map'">
+          <input type="search" v-model="filters.search" placeholder="Search...">
+        </div>
         <div class="view-toggle">
           <button 
             class="toggle-btn" 
@@ -81,10 +84,6 @@ onMounted(() => {
       <section v-if="viewMode === 'map'" class="tree-stage">
         <div class="tree-toolbar">
           <!-- Toolbar content if needed -->
-        </div>
-        
-        <div class="map-search-overlay">
-          <input type="search" v-model="filters.search" placeholder="Search nodes...">
         </div>
         
         <TheMap 
