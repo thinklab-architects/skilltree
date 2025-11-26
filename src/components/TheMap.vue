@@ -2,7 +2,7 @@
 import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import * as d3 from 'd3'
 
-const props = define defineProps({
+const props = defineProps({
   tracks: Array,
   tutorials: Array,
   filteredTutorials: Array
