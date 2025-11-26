@@ -256,17 +256,54 @@ const initMap = () => {
   // Hover effects
   node.on('mouseenter', function(event, d) {
     if (d.type === 'tutorial') {
+      const nodeGroup = d3.select(this)
+      
       // Highlight the node - morph to heptagon
-      d3.select(this).select('path')
+      nodeGroup.select('path')
         .attr('d', heptagon)
         .attr('fill', 'rgba(0, 0, 0, 0.7)') // Dark semi-transparent background
         .attr('transform', 'scale(2.5)')
         .style('filter', `drop-shadow(0 0 15px ${d.color})`)
         
-      d3.select(this).select('text')
+      nodeGroup.select('text')
         .attr('fill', 'white') // Text turns white
         .style('font-weight', 'bold')
         .style('font-size', '13px') // Larger text on hover
+      
+      // Add level above title
+      if (d.data && d.data.level) {
+        nodeGroup.append('text')
+          .attr('class', 'hover-level')
+          .attr('text-anchor', 'middle')
+          .attr('dy', '-1.5em')
+          .attr('fill', 'white')
+          .style('font-size', '9px')
+          .style('font-weight', '600')
+          .style('opacity', 0.8)
+          .text(d.data.level)
+      }
+      
+      // Add tags below title (max 3)
+      if (d.data && d.data.tags && d.data.tags.length > 0) {
+        const tagsToShow = d.data.tags.slice(0, 3)
+        const tagsText = tagsToShow.join(' · ')
+        
+        nodeGroup.append('text')
+          .attr('class', 'hover-tags')
+          .attr('text-anchor', 'middle')
+          .attr('dy', '1.8em')
+          .attr('fill', 'white')
+          .style('font-size', '8px')
+          .style('font-weight', '400')
+          .style('opacity', 0.7)
+          .text(tagsText)
+          .each(function() {
+            const self = d3.select(this)
+            if (self.text().length > 30) {
+              self.text(self.text().slice(0, 30) + '...')
+            }
+          })
+      }
       
       // Highlight all links in the same track
       const trackClass = `track-${d.color.replace('#', '')}`
@@ -278,17 +315,23 @@ const initMap = () => {
   })
   .on('mouseleave', function(event, d) {
     if (d.type === 'tutorial') {
+      const nodeGroup = d3.select(this)
+      
       // Reset the node - back to pentagon
-      d3.select(this).select('path')
+      nodeGroup.select('path')
         .attr('d', getShardPath(d.id))
         .attr('fill', '#fff')
         .attr('transform', 'scale(1.8)')
         .style('filter', `drop-shadow(0 0 5px ${d.color})`)
         
-      d3.select(this).select('text')
+      nodeGroup.select('text')
         .attr('fill', '#444') // Revert to dark gray
         .style('font-weight', 'bold') // Keep bold as default
         .style('font-size', '11px') // Back to normal size
+      
+      // Remove hover-added elements
+      nodeGroup.selectAll('.hover-level').remove()
+      nodeGroup.selectAll('.hover-tags').remove()
       
       // Reset all links in the same track
       const trackClass = `track-${d.color.replace('#', '')}`
