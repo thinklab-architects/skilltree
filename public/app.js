@@ -202,13 +202,10 @@ function renderTree() {
   const tracks = state.data.tracks;
   const tutorials = state.data.tutorials;
   const filteredSet = new Set(applyFilters().map(t => t.id));
-  const columnSpacing = 220;
-  const verticalSpacing = 150;
   const viewportWidth = treeViewport.clientWidth || 960;
   const viewportHeight = treeViewport.clientHeight || 600;
-  const width = Math.max((tracks.length + 2) * columnSpacing, viewportWidth);
-  const maxPerTrack = Math.max(...tracks.map(track => tutorials.filter(t => t.trackId === track.id).length), 1);
-  const height = Math.max((maxPerTrack + 3) * verticalSpacing, viewportHeight);
+  const width = Math.max(viewportWidth, 1400);
+  const height = Math.max(viewportHeight, 1400);
   treeLines.setAttribute('viewBox', `0 0 ${width} ${height}`);
   treeLines.setAttribute('width', width);
   treeLines.setAttribute('height', height);
@@ -217,54 +214,52 @@ function renderTree() {
   treeLines.innerHTML = '';
   treeNodes.innerHTML = '';
 
-  const root = { id: 'root', title: 'Skill Trails', subtitle: 'Start here', x: width / 2, y: 70 };
+  const center = { x: width / 2, y: height / 2 };
+  const root = { id: 'root', title: 'THINKLAB SKILLTREE', subtitle: 'Start here', x: center.x, y: center.y };
   createNodeElement(root, null, true, true);
 
   const connectors = [];
+  const angleStep = (Math.PI * 2) / Math.max(tracks.length, 1);
+  const radiusStart = 160;
+  const radiusStep = 140;
+
   tracks.forEach((track, idx) => {
     const modules = tutorials.filter(t => t.trackId === track.id);
-    const columnX = columnSpacing + idx * columnSpacing;
+    const angle = angleStep * idx - Math.PI / 2;
     if (!modules.length) {
+      const x = center.x + Math.cos(angle) * (radiusStart + 80);
+      const y = center.y + Math.sin(angle) * (radiusStart + 80);
       connectors.push({
-        x1: root.x,
-        y1: root.y + 20,
-        x2: columnX,
-        y2: root.y + 140,
-        color: track.color || '#ffb347',
-        bend: idx % 2 === 0 ? 1 : -1
+        x1: center.x,
+        y1: center.y,
+        x2: x,
+        y2: y,
+        color: track.color || '#ffb347'
       });
       return;
     }
     modules.forEach((module, modIdx) => {
-      const y = 160 + modIdx * verticalSpacing;
-      if (modIdx === 0) {
-        connectors.push({
-          x1: root.x,
-          y1: root.y + 20,
-          x2: columnX,
-          y2: y - 40,
-          color: track.color || '#ffb347',
-          bend: idx % 2 === 0 ? 1 : -1
-        });
-      } else {
-        const prevY = 160 + (modIdx - 1) * verticalSpacing;
-        connectors.push({
-          x1: columnX,
-          y1: prevY + 30,
-          x2: columnX,
-          y2: y - 30,
-          color: track.color || '#ffb347',
-          bend: modIdx % 2 === 0 ? 1 : -1
-        });
-      }
+      const radius = radiusStart + radiusStep * (modIdx + 1);
+      const x = center.x + Math.cos(angle) * radius;
+      const y = center.y + Math.sin(angle) * radius;
       const match = filteredSet.has(module.id);
       createNodeElement({
         id: module.id,
         title: module.title,
         subtitle: track.title,
-        x: columnX,
+        x,
         y
       }, track, false, match);
+      const previousRadius = modIdx === 0 ? 0 : radiusStart + radiusStep * modIdx;
+      const prevX = modIdx === 0 ? center.x : center.x + Math.cos(angle) * previousRadius;
+      const prevY = modIdx === 0 ? center.y : center.y + Math.sin(angle) * previousRadius;
+      connectors.push({
+        x1: prevX,
+        y1: prevY,
+        x2: x,
+        y2: y,
+        color: track.color || '#ffb347'
+      });
     });
   });
 
@@ -296,10 +291,7 @@ function drawConnectors(connectors) {
   const ns = 'http://www.w3.org/2000/svg';
   connectors.forEach(conn => {
     const path = document.createElementNS(ns, 'path');
-    const bend = conn.bend || 1;
-    const controlX = conn.x1 + 120 * bend;
-    const midY = (conn.y1 + conn.y2) / 2;
-    const d = `M ${conn.x1} ${conn.y1} C ${controlX} ${midY}, ${controlX} ${midY}, ${conn.x2} ${conn.y2}`;
+    const d = `M ${conn.x1} ${conn.y1} L ${conn.x2} ${conn.y2}`;
     path.setAttribute('d', d);
     path.setAttribute('fill', 'none');
     path.setAttribute('stroke', conn.color || 'rgba(0,0,0,0.2)');
