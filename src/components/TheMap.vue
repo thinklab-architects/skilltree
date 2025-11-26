@@ -178,8 +178,10 @@ const onNodeClick = (node, e) => {
         :d="`M ${conn.x1} ${conn.y1} L ${conn.x2} ${conn.y2}`"
         fill="none"
         :stroke="conn.color"
+        stroke-width="2"
+        stroke-dasharray="6,6"
         stroke-linecap="round"
-        opacity="0.35"
+        opacity="0.6"
       />
     </svg>
     
