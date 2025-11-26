@@ -1,0 +1,161 @@
+{
+  "tracks": [
+    {
+      "id": "track-foundations",
+      "title": "Studio Foundations",
+      "description": "Align client intent, program, and project compass.",
+      "color": "#1dd1a1",
+      "focus": "Discovery -> Schematic",
+      "lead": "Design Ops"
+    },
+    {
+      "id": "track-delivery",
+      "title": "Delivery Systems",
+      "description": "Translate design into coordinated documentation.",
+      "color": "#0abde3",
+      "focus": "DD -> CD",
+      "lead": "Technical Design"
+    },
+    {
+      "id": "track-digital",
+      "title": "Digital Practice",
+      "description": "Modeling, data, and automation for project teams.",
+      "color": "#ff9f43",
+      "focus": "BIM -> Coordination",
+      "lead": "Digital Practice"
+    }
+  ],
+  "tutorials": [
+    {
+      "id": "module-briefing",
+      "trackId": "track-foundations",
+      "title": "Client Briefing Blueprint",
+      "summary": "A workshop-ready flow to surface constraints, map stakeholders, and define measurable outcomes.",
+      "status": "ready",
+      "level": "Core",
+      "duration": "30m read / 1h workshop",
+      "tags": [
+        "process",
+        "stakeholder",
+        "kickoff"
+      ],
+      "links": [
+        {
+          "label": "Brief template",
+          "url": "https://example.com/brief-template"
+        },
+        {
+          "label": "Miro board",
+          "url": "https://example.com/miro"
+        }
+      ],
+      "owner": "Design Ops",
+      "highlight": "Run this before schematic design to avoid late scope shocks."
+    },
+    {
+      "id": "module-charrette",
+      "trackId": "track-foundations",
+      "title": "Charrette Map",
+      "summary": "Modular charrette formats with timing, room set-up, and capture methods for hybrid teams.",
+      "status": "in-review",
+      "level": "Core",
+      "duration": "45m prep",
+      "tags": [
+        "workshop",
+        "participation"
+      ],
+      "links": [
+        {
+          "label": "Agenda kit",
+          "url": "https://example.com/agenda"
+        }
+      ],
+      "owner": "Practice Lead",
+      "highlight": "Includes facilitation script and capture templates."
+    },
+    {
+      "id": "module-revit-kit",
+      "trackId": "track-digital",
+      "title": "BIM Kickstart in Revit",
+      "summary": "Lean Revit start file with view templates, sheets, and issue-ready exports.",
+      "status": "ready",
+      "level": "Foundation",
+      "duration": "20m setup",
+      "tags": [
+        "BIM",
+        "Revit",
+        "export"
+      ],
+      "links": [
+        {
+          "label": "Start file",
+          "url": "https://example.com/revit-start"
+        },
+        {
+          "label": "Issue checklist",
+          "url": "https://example.com/checklist"
+        }
+      ],
+      "owner": "Digital Practice",
+      "highlight": "Designed for small teams; trims first-week setup to <1 hour."
+    },
+    {
+      "id": "module-navis",
+      "trackId": "track-digital",
+      "title": "Clash Detection Sprint (Navisworks)",
+      "summary": "Two-sprint cadence for federating models, running clashes, and routing issues back to teams.",
+      "status": "draft",
+      "level": "Advanced",
+      "duration": "2h run / weekly",
+      "tags": [
+        "coordination",
+        "Navisworks"
+      ],
+      "links": [
+        {
+          "label": "Sprint board",
+          "url": "https://example.com/board"
+        }
+      ],
+      "owner": "VDC",
+      "highlight": "Pair with BIM 360 issues for traceable close-out."
+    },
+    {
+      "id": "module-packaging",
+      "trackId": "track-delivery",
+      "title": "Issue Packaging Rhythm",
+      "summary": "A repeatable weekly cadence with publication rules, approvals, and QA gates.",
+      "status": "ready",
+      "level": "Core",
+      "duration": "45m",
+      "tags": [
+        "QA",
+        "publishing"
+      ],
+      "links": [
+        {
+          "label": "QA checklist",
+          "url": "https://example.com/qa"
+        }
+      ],
+      "owner": "Technical Design",
+      "highlight": "Reduce rework and align consultants on what \"issued\" means."
+    },
+    {
+      "id": "module-detailing",
+      "trackId": "track-delivery",
+      "title": "Detailing Lab",
+      "summary": "Reference set of details with commentary on constructability and spec alignment.",
+      "status": "in-review",
+      "level": "Advanced",
+      "duration": "self-paced",
+      "tags": [
+        "detailing",
+        "specs"
+      ],
+      "links": [],
+      "owner": "Technical Design",
+      "highlight": "Pairs example details with pitfalls and redlines."
+    }
+  ]
+}
