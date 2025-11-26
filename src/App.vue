@@ -115,12 +115,7 @@ onMounted(() => {
     
     <footer class="footer">
       <div>
-        <p class="eyebrow">Deploy</p>
-        <p>GitHub Pages: serve the docs folder (includes data/trails.json). Data is managed via Airtable.</p>
-      </div>
-      <div>
-        <p class="eyebrow">Usage</p>
-        <p>Team views the live trail.</p>
+        <a href="https://www.tlabarc.com/" target="_blank" rel="noopener noreferrer">THINKLAB ARCHITECT 之物建築</a>
       </div>
     </footer>
   </div>
