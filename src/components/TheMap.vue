@@ -44,7 +44,7 @@ const initMap = () => {
   const links = []
 
   // 1. Root Node
-  const rootNode = { id: 'root', type: 'root', title: 'THINKLAB', r: 40, fx: 0, fy: 0 }
+  const rootNode = { id: 'root', type: 'root', title: 'THINKLAB', r: 50, fx: 0, fy: 0 }
   nodes.push(rootNode)
 
   // 2. Track Nodes
@@ -54,7 +54,7 @@ const initMap = () => {
       type: 'track', 
       title: track.title, 
       color: track.color, 
-      r: 30,
+      r: 40,
       trackId: track.id
     }
     nodes.push(trackNode)
@@ -74,7 +74,7 @@ const initMap = () => {
         title: tut.title,
         trackId: track.id,
         color: track.color,
-        r: 20,
+        r: 30,
         visible: isVisible,
         data: tut
       }
@@ -112,7 +112,7 @@ const initMap = () => {
 
   // Simulation
   simulation = d3.forceSimulation(nodes)
-    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 125 : 120))
+    .force('link', d3.forceLink(links).id(d => d.id).distance(d => d.type === 'root-track' ? 100 : 80))
     .force('charge', d3.forceManyBody().strength(-2000))
     .force('collide', d3.forceCollide().radius(d => d.r + 40))
     .force('x', d3.forceX())
@@ -168,7 +168,7 @@ const initMap = () => {
         .attr('dy', 4)
         .attr('fill', 'white')
         .style('font-weight', 'bold')
-        .style('font-size', '10px') // Slightly smaller font to fit
+        .style('font-size', '12px')
 
         
     } else if (d.type === 'track') {
@@ -181,7 +181,7 @@ const initMap = () => {
         .attr('dy', 5) // Centered
         .attr('fill', d.color)
         .style('font-weight', '800')
-        .style('font-size', '14px')
+        .style('font-size', '16px')
         .style('text-transform', 'uppercase')
         .style('text-shadow', '0 0 10px rgba(255,255,255,0.8)')
         .style('pointer-events', 'none') // Let clicks pass through if needed, or keep it interactive
@@ -190,7 +190,7 @@ const initMap = () => {
       // Tutorial Node
       el.append('path')
         .attr('d', getShardPath(d.id))
-        .attr('transform', 'scale(1.8)')
+        .attr('transform', 'scale(2.2)')
         .attr('fill', '#fff')
         .attr('stroke', d.color)
         .attr('stroke-width', 2)
@@ -203,7 +203,7 @@ const initMap = () => {
         const text = el.append('text')
           .attr('text-anchor', 'middle')
           .attr('fill', '#444')
-          .style('font-size', '11px')
+          .style('font-size', '13px')
           .style('font-weight', 'bold')
           .style('pointer-events', 'none')
           .style('text-shadow', '0 0 4px white')
@@ -262,13 +262,13 @@ const initMap = () => {
       nodeGroup.select('path')
         .attr('d', heptagon)
         .attr('fill', 'rgba(0, 0, 0, 0.7)') // Dark semi-transparent background
-        .attr('transform', 'scale(2.5)')
+        .attr('transform', 'scale(3)')
         .style('filter', `drop-shadow(0 0 15px ${d.color})`)
         
       nodeGroup.select('text')
         .attr('fill', 'white') // Text turns white
         .style('font-weight', 'bold')
-        .style('font-size', '13px') // Larger text on hover
+        .style('font-size', '15px') // Larger text on hover
       
       // Add level above title
       if (d.data && d.data.level) {
@@ -321,13 +321,13 @@ const initMap = () => {
       nodeGroup.select('path')
         .attr('d', getShardPath(d.id))
         .attr('fill', '#fff')
-        .attr('transform', 'scale(1.8)')
+        .attr('transform', 'scale(2.2)')
         .style('filter', `drop-shadow(0 0 5px ${d.color})`)
         
       nodeGroup.select('text')
         .attr('fill', '#444') // Revert to dark gray
         .style('font-weight', 'bold') // Keep bold as default
-        .style('font-size', '11px') // Back to normal size
+        .style('font-size', '13px') // Back to normal size
       
       // Remove hover-added elements
       nodeGroup.selectAll('.hover-level').remove()
