@@ -44,7 +44,7 @@ const initMap = () => {
   const links = []
 
   // 1. Root Node
-  const rootNode = { id: 'root', type: 'root', title: 'THINKLAB', r: 50, fx: 0, fy: 0 }
+  const rootNode = { id: 'root', type: 'root', title: 'THINKLAB', r: 60, fx: 0, fy: 0 }
   nodes.push(rootNode)
 
   // 2. Track Nodes
@@ -158,7 +158,7 @@ const initMap = () => {
     if (d.type === 'root') {
       el.append('path')
         .attr('d', regularPentagon)
-        .attr('transform', 'scale(1.5)') // Resulting size approx r=30 (smaller than previous r=40)
+        .attr('transform', 'scale(1.8)') // Larger center node
         .attr('fill', '#ff7a18')
         .style('filter', 'drop-shadow(0 0 15px rgba(255, 122, 24, 0.6))')
       
@@ -168,7 +168,7 @@ const initMap = () => {
         .attr('dy', 4)
         .attr('fill', 'white')
         .style('font-weight', 'bold')
-        .style('font-size', '12px')
+        .style('font-size', '14px') // Larger font
 
         
     } else if (d.type === 'track') {
