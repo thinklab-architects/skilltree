@@ -158,7 +158,6 @@ onMounted(() => {
 
       <section v-if="viewMode === 'list'" class="list-view">
         <div class="container">
-          <h2>All Tutorials</h2>
           <div class="tutorial-grid">
             <div 
               v-for="tutorial in filteredTutorials" 
