@@ -69,6 +69,7 @@ export const fetchAirtableData = async () => {
                 id: record.get('Slug') || record.id,
                 trackId: null, // We need to resolve this
                 _trackRecordIds: trackLinks,
+                _precedentRecordIds: record.get('Precedent') || [], // Store precedent record IDs
                 title: record.get('Title'),
                 summary: record.get('Summary'),
                 status: record.get('Status'),
@@ -78,6 +79,7 @@ export const fetchAirtableData = async () => {
                 owner: record.get('Owner'),
                 highlight: record.get('Highlight'),
                 coverImage: record.get('CoverImage') ? record.get('CoverImage')[0]?.url : null,
+                precedent: [], // Will populate after mapping
                 links: [] // Will populate
             }
         })
@@ -101,6 +103,14 @@ export const fetchAirtableData = async () => {
                 t.trackId = trackRecordIdToSlug[t._trackRecordIds[0]]
             }
             delete t._trackRecordIds
+
+            // Map precedent record IDs to tutorial IDs
+            if (t._precedentRecordIds && t._precedentRecordIds.length > 0) {
+                t.precedent = t._precedentRecordIds
+                    .map(recordId => tutorialRecordIdToObj[recordId]?.id)
+                    .filter(Boolean)
+            }
+            delete t._precedentRecordIds
         })
 
         // Attach Links to Tutorials

@@ -92,6 +92,23 @@ const initMap = () => {
     })
   })
 
+  // Add precedent connections (gray dashed lines)
+  props.tutorials.forEach(tut => {
+    if (tut.precedent && tut.precedent.length > 0) {
+      tut.precedent.forEach(precedentId => {
+        // Only add link if both nodes exist
+        if (nodes.some(n => n.id === tut.id) && nodes.some(n => n.id === precedentId)) {
+          links.push({
+            source: precedentId,
+            target: tut.id,
+            type: 'precedent-link',
+            color: '#999' // Gray color for precedent links
+          })
+        }
+      })
+    }
+  })
+
   // Clear existing SVG
   d3.select(svgRef.value).selectAll('*').remove()
 
