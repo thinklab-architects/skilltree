@@ -198,7 +198,7 @@ const initMap = () => {
         .attr('dy', 5) // Centered
         .attr('fill', d.color)
         .style('font-weight', '800')
-        .style('font-size', '16px')
+        .style('font-size', '24px')
         .style('text-transform', 'uppercase')
         .style('text-shadow', '0 0 10px rgba(255,255,255,0.8)')
         .style('pointer-events', 'none') // Let clicks pass through if needed, or keep it interactive
